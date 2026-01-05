@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Modal Structure</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Debug: Check what's happening</h1>
+    <button id="test-open">Open Test Modal</button>
+    
+    <script>
+        var waza_frontend = {
+            appearance: {
+                step_labels: 'Select Time,Details,Your Info,Payment,Done'
+            }
+        };
+        
+        var WazaUtils = {
+            formatDate: function(date) {
+                return date;
+            }
+        };
+        
+        $('#test-open').on('click', function() {
+            const date = '2026-01-05';
+            const slotsHtml = `
+                <div class="waza-slots-list">
+                    <div class="waza-time-slot" data-slot-id="123">
+                        <div class="waza-slot-activity">Hip Hop Basics</div>
+                        <div class="waza-slot-time">10:00 AM - 11:00 AM</div>
+                        <div class="waza-slot-instructor">Demo Instructor</div>
+                        <div class="waza-slot-badge waza-badge-available">5 spots left</div>
+                        <button class="waza-btn waza-btn-primary waza-select-slot" data-slot-id="123">Book Now</button>
+                    </div>
+                    <div class="waza-time-slot" data-slot-id="124">
+                        <div class="waza-slot-activity">Hip Hop Basics</div>
+                        <div class="waza-slot-time">2:00 PM - 3:00 PM</div>
+                        <div class="waza-slot-instructor">Demo Instructor</div>
+                        <div class="waza-slot-badge waza-badge-available">3 spots left</div>
+                        <button class="waza-btn waza-btn-primary waza-select-slot" data-slot-id="124">Book Now</button>
+                    </div>
+                </div>
+            `;
+            
+            // Remove any existing modal first
+            $('#waza-booking-modal').remove();
+            
+            const dateStr = WazaUtils.formatDate(date);
+            const stepLabels = ['Select Time', 'Details', 'Your Info', 'Payment', 'Done'];
+            
+            const modalHtml = `
+                <div id="waza-booking-modal" class="waza-modal">
+                    <div class="waza-modal-content waza-booking-modal-content">
+                        <div class="waza-modal-header">
+                            <h3 class="waza-modal-title">Complete Booking - ${dateStr}</h3>
+                            <button class="waza-close">&times;</button>
+                        </div>
+                        <div class="waza-modal-body">
+                            <div class="waza-booking-form-wrapper">
+                                <!-- Progress Bar -->
+                                <div class="waza-progress-bar-container">
+                                    <div class="waza-progress-bar-segment active" data-step="1">
+                                        <div class="waza-progress-bar-label">${stepLabels[0]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="2">
+                                        <div class="waza-progress-bar-label">${stepLabels[1]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="3">
+                                        <div class="waza-progress-bar-label">${stepLabels[2]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="4">
+                                        <div class="waza-progress-bar-label">${stepLabels[3]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="5">
+                                        <div class="waza-progress-bar-label">${stepLabels[4]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 1: Slot Selection -->
+                                <div class="waza-step-section active" data-step="1">
+                                    <h4>Select a time slot</h4>
+                                    ${slotsHtml}
+                                </div>
+                                
+                                <!-- Steps 2-5 will be loaded dynamically -->
+                                <div id="waza-booking-steps-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(modalHtml);
+            $('#waza-booking-modal').show();
+            
+            console.log('Modal HTML:', modalHtml);
+            console.log('Modal in DOM:', $('#waza-booking-modal').length);
+            console.log('Progress bar elements:', $('.waza-progress-bar-container').length);
+        });
+        
+        // Close modal
+        $(document).on('click', '.waza-close', function() {
+            $('#waza-booking-modal').remove();
+        });
+    </script>
+</body>
+</html>

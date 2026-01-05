@@ -1,0 +1,46 @@
+/* Waza Calendar Styles */
+
+.waza-calendar-wrapper {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.waza-more-slots {
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.waza-more-slots:hover {
+    color: #007bff !important;
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .waza-calendar-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .waza-calendar-title {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .waza-weekday {
+        padding: 10px 5px;
+        font-size: 12px;
+    }
+    
+    .waza-calendar-nav,
+    .waza-calendar-today {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+    
+    .waza-calendar-nav .dashicons {
+        display: none;
+    }
+}

@@ -1,0 +1,429 @@
+/* Waza Booking Elementor Widgets Styles */
+
+/* Activities Grid Widget */
+.elementor-widget-waza-activities-grid .activity-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.elementor-widget-waza-activities-grid .activity-grid.columns-1 {
+    grid-template-columns: 1fr;
+}
+
+.elementor-widget-waza-activities-grid .activity-grid.columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.elementor-widget-waza-activities-grid .activity-grid.columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.elementor-widget-waza-activities-grid .activity-grid.columns-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.elementor-widget-waza-activities-grid .activity-grid.columns-6 {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+.elementor-widget-waza-activities-grid .activity-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.elementor-widget-waza-activities-grid .activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Booking Calendar Widget */
+.elementor-widget-waza-booking-calendar .waza-calendar {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-nav-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-nav-btn:hover {
+    background: #0073aa;
+    color: #fff;
+    border-color: #0073aa;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.elementor-widget-waza-booking-calendar .calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-day:hover {
+    background: #f8f9fa;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-day.today {
+    background: #0073aa;
+    color: #fff;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-day.has-slots {
+    position: relative;
+}
+
+.elementor-widget-waza-booking-calendar .calendar-day.has-slots::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #28a745;
+}
+
+/* Booking Form Widget */
+.elementor-widget-waza-booking-form .waza-booking-form {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.elementor-widget-waza-booking-form .activity-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.elementor-widget-waza-booking-form .activity-title {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.elementor-widget-waza-booking-form .activity-description {
+    margin: 0 0 15px 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+.elementor-widget-waza-booking-form .activity-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+}
+
+.elementor-widget-waza-booking-form .form-field {
+    margin-bottom: 20px;
+}
+
+.elementor-widget-waza-booking-form .form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #23282d;
+}
+
+.elementor-widget-waza-booking-form .form-field input,
+.elementor-widget-waza-booking-form .form-field select,
+.elementor-widget-waza-booking-form .form-field textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.elementor-widget-waza-booking-form .form-field input:focus,
+.elementor-widget-waza-booking-form .form-field select:focus,
+.elementor-widget-waza-booking-form .form-field textarea:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.elementor-widget-waza-booking-form .submit-booking-btn {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.elementor-widget-waza-booking-form .submit-booking-btn:hover {
+    background: #005a87;
+}
+
+/* User Dashboard Widget */
+.elementor-widget-waza-user-dashboard .waza-user-dashboard {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.elementor-widget-waza-user-dashboard .dashboard-nav {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.elementor-widget-waza-user-dashboard .nav-tab {
+    flex: 1;
+    padding: 15px 20px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+    font-weight: 500;
+}
+
+.elementor-widget-waza-user-dashboard .nav-tab:hover {
+    background: #e9ecef;
+    color: #23282d;
+}
+
+.elementor-widget-waza-user-dashboard .nav-tab.active {
+    background: #0073aa;
+    color: #fff;
+}
+
+.elementor-widget-waza-user-dashboard .dashboard-content {
+    padding: 30px;
+}
+
+.elementor-widget-waza-user-dashboard .booking-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: box-shadow 0.3s ease;
+}
+
+.elementor-widget-waza-user-dashboard .booking-card:hover {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.elementor-widget-waza-user-dashboard .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.elementor-widget-waza-user-dashboard .status-badge.confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.elementor-widget-waza-user-dashboard .status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.elementor-widget-waza-user-dashboard .status-badge.cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Instructors List Widget */
+.elementor-widget-waza-instructors-list .instructors-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.elementor-widget-waza-instructors-list .instructors-grid.columns-1 {
+    grid-template-columns: 1fr;
+}
+
+.elementor-widget-waza-instructors-list .instructors-grid.columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.elementor-widget-waza-instructors-list .instructors-grid.columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.elementor-widget-waza-instructors-list .instructors-grid.columns-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.elementor-widget-waza-instructors-list .instructors-grid.columns-6 {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+.elementor-widget-waza-instructors-list .instructor-card {
+    background: #fff;
+    text-align: center;
+    padding: 30px 20px;
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.elementor-widget-waza-instructors-list .instructor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.elementor-widget-waza-instructors-list .instructor-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    overflow: hidden;
+    object-fit: cover;
+}
+
+.elementor-widget-waza-instructors-list .instructor-name {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.elementor-widget-waza-instructors-list .instructor-title {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.elementor-widget-waza-instructors-list .instructor-bio {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.elementor-widget-waza-instructors-list .specialties {
+    margin-bottom: 15px;
+}
+
+.elementor-widget-waza-instructors-list .specialty-tag {
+    display: inline-block;
+    background: #f0f8ff;
+    color: #0073aa;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin: 2px;
+}
+
+.elementor-widget-waza-instructors-list .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.elementor-widget-waza-instructors-list .social-links a {
+    color: #666;
+    font-size: 18px;
+    transition: color 0.3s ease;
+}
+
+.elementor-widget-waza-instructors-list .social-links a:hover {
+    color: #0073aa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .elementor-widget-waza-activities-grid .activity-grid.columns-3,
+    .elementor-widget-waza-activities-grid .activity-grid.columns-4,
+    .elementor-widget-waza-activities-grid .activity-grid.columns-6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .elementor-widget-waza-instructors-list .instructors-grid.columns-3,
+    .elementor-widget-waza-instructors-list .instructors-grid.columns-4,
+    .elementor-widget-waza-instructors-list .instructors-grid.columns-6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .elementor-widget-waza-user-dashboard .dashboard-nav {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .elementor-widget-waza-activities-grid .activity-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .elementor-widget-waza-instructors-list .instructors-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .elementor-widget-waza-booking-calendar .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        font-size: 12px;
+    }
+}
+
+/* Loading States */
+.elementor-widget-waza-activities-grid .loading,
+.elementor-widget-waza-booking-calendar .loading,
+.elementor-widget-waza-booking-form .loading,
+.elementor-widget-waza-user-dashboard .loading,
+.elementor-widget-waza-instructors-list .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #666;
+}
+
+.elementor-widget-waza-activities-grid .loading::after,
+.elementor-widget-waza-booking-calendar .loading::after,
+.elementor-widget-waza-booking-form .loading::after,
+.elementor-widget-waza-user-dashboard .loading::after,
+.elementor-widget-waza-instructors-list .loading::after {
+    content: '';
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

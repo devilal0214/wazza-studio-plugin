@@ -1,0 +1,389 @@
+/* Waza Booking Admin Styles */
+
+:root {
+    /* Modern Color Palette */
+    --waza-primary: #4F46E5;
+    /* Indigo 600 */
+    --waza-primary-hover: #4338CA;
+    /* Indigo 700 */
+    --waza-secondary: #10B981;
+    /* Emerald 500 */
+    --waza-accent: #F59E0B;
+    /* Amber 500 */
+    --waza-danger: #EF4444;
+    /* Red 500 */
+
+    /* Neutral Colors */
+    --waza-bg: #F9FAFB;
+    /* Gray 50 */
+    --waza-surface: #FFFFFF;
+    /* White */
+    --waza-text-main: #111827;
+    /* Gray 900 */
+    --waza-text-secondary: #6B7280;
+    /* Gray 500 */
+    --waza-border: #E5E7EB;
+    /* Gray 200 */
+
+    /* Shadows */
+    --waza-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --waza-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    /* Radius */
+    --waza-radius: 0.5rem;
+    /* 8px */
+}
+
+/* Admin Menu Improvements */
+.toplevel_page_waza-booking .wp-menu-image img {
+    opacity: 0.8;
+    filter: brightness(0) invert(1);
+}
+
+/* Modern Tab Navigation */
+.waza-settings-tabs,
+.waza-customization-tabs {
+    background: #fff !important;
+    border: 1px solid var(--waza-border) !important;
+    border-radius: var(--waza-radius) var(--waza-radius) 0 0;
+    margin-bottom: 0 !important;
+    display: flex;
+    gap: 0;
+    padding: 0 10px;
+    box-shadow: var(--waza-shadow-sm);
+}
+
+.waza-settings-tabs .nav-tab,
+.waza-customization-tabs .nav-tab {
+    background: transparent;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    color: var(--waza-text-secondary);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    margin: 0;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.waza-settings-tabs .nav-tab:hover {
+    color: var(--waza-primary);
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.waza-settings-tabs .nav-tab-active,
+.waza-settings-tabs .nav-tab.active {
+    color: var(--waza-primary) !important;
+    border-bottom-color: var(--waza-primary) !important;
+    background: #fff !important;
+}
+
+/* Tab Content Visibility - Increased Specificity */
+.waza-settings-container .waza-tab-content,
+.waza-customization-admin .tab-panel,
+.waza-customization-admin .waza-tab-content {
+    display: none !important;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid var(--waza-border);
+    border-top: none;
+    border-radius: 0 0 var(--waza-radius) var(--waza-radius);
+    box-shadow: var(--waza-shadow-sm);
+}
+
+.waza-settings-container .waza-tab-content.active,
+.waza-settings-container .waza-tab-active,
+.waza-customization-admin .tab-panel.active,
+.waza-customization-admin .waza-tab-content.active {
+    display: block !important;
+    animation: wazaFadeIn 0.3s ease-out;
+}
+
+@keyframes wazaFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Form Styling */
+.waza-form .form-table th {
+    font-weight: 600;
+    color: var(--waza-text-main);
+    padding: 1.5rem 1rem 1.5rem 0;
+}
+
+.waza-form .form-table td {
+    padding: 1.5rem 1rem;
+}
+
+.waza-form .form-table input[type="text"],
+.waza-form .form-table input[type="email"],
+.waza-form .form-table input[type="url"],
+.waza-form .form-table input[type="number"],
+.waza-form .form-table input[type="password"],
+.waza-form .form-table input[type="date"],
+.waza-form .form-table input[type="time"],
+.waza-form .form-table select,
+.waza-form .form-table textarea {
+    border: 1px solid var(--waza-border);
+    border-radius: var(--waza-radius);
+    padding: 0.6rem 1rem;
+    font-size: 14px;
+    box-shadow: var(--waza-shadow-sm);
+    transition: all 0.2s;
+}
+
+.waza-form .form-table input:focus,
+.waza-form .form-table select:focus,
+.waza-form .form-table textarea:focus {
+    border-color: var(--waza-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    outline: none;
+}
+
+/* Button Styling */
+.button-primary.waza-button {
+    background: var(--waza-primary);
+    border: none;
+    border-radius: var(--waza-radius);
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    text-shadow: none;
+    box-shadow: var(--waza-shadow-sm);
+    transition: all 0.2s;
+    height: auto;
+    line-height: 1.5;
+}
+
+.button-primary.waza-button:hover {
+    background: var(--waza-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--waza-shadow);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-available {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.status-full {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.status-cancelled {
+    background: #F3F4F6;
+    color: #4B5563;
+}
+
+/* Card Layouts */
+.waza-card {
+    background: var(--waza-surface);
+    border: 1px solid var(--waza-border);
+    border-radius: var(--waza-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--waza-shadow-sm);
+}
+
+.waza-card h3 {
+    margin: 0 0 1rem 0;
+    color: var(--waza-text-main);
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--waza-border);
+    padding-bottom: 0.75rem;
+}
+
+/* Dashboard Widgets */
+.waza-dashboard-widget {
+    background: var(--waza-surface);
+    border: 1px solid var(--waza-border);
+    border-radius: var(--waza-radius);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.2s;
+    box-shadow: var(--waza-shadow-sm);
+}
+
+.waza-dashboard-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--waza-shadow);
+    border-color: var(--waza-primary);
+}
+
+.waza-dashboard-widget .widget-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--waza-primary);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.waza-dashboard-widget .widget-label {
+    font-size: 0.875rem;
+    color: var(--waza-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+/* Grid Layouts */
+.waza-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.waza-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.waza-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.waza-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Responsive Tables */
+.waza-table-responsive {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    background: var(--waza-surface);
+    border-radius: var(--waza-radius);
+    border: 1px solid var(--waza-border);
+    box-shadow: var(--waza-shadow-sm);
+}
+
+.waza-table-responsive table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.waza-table-responsive th {
+    background: var(--waza-bg);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--waza-text-secondary);
+    border-bottom: 1px solid var(--waza-border);
+}
+
+.waza-table-responsive td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--waza-border);
+    color: var(--waza-text-main);
+}
+
+.waza-table-responsive tr:last-child td {
+    border-bottom: none;
+}
+
+/* Time Slot Management */
+.time-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: var(--waza-bg);
+    border-radius: var(--waza-radius);
+    border: 1px solid var(--waza-border);
+}
+
+.time-slot-row .remove-time-slot {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: none;
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.time-slot-row .remove-time-slot:hover {
+    background: #FCA5A5;
+}
+
+/* Payment Gateway Settings */
+.waza-gateway-test-button {
+    background: var(--waza-secondary);
+    color: white;
+    border: none;
+    border-radius: var(--waza-radius);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.waza-gateway-test-button:hover {
+    background: #059669;
+}
+
+.waza-gateway-test-result {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: var(--waza-radius);
+    font-size: 0.85rem;
+}
+
+.waza-gateway-test-result.success {
+    background: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+}
+
+.waza-gateway-test-result.error {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 782px) {
+
+    .waza-grid-2,
+    .waza-grid-3,
+    .waza-grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .waza-settings-tabs {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .waza-settings-tabs .nav-tab {
+        border-bottom: 1px solid var(--waza-border);
+    }
+}

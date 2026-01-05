@@ -1,0 +1,463 @@
+/* Waza Booking Admin Customization Styles */
+
+.waza-customization-admin {
+    max-width: 1200px;
+    margin: 20px 0;
+}
+
+.customization-header {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.customization-header h1 {
+    margin: 0 0 10px 0;
+    color: #23282d;
+}
+
+.customization-header p {
+    margin: 0;
+    color: #666;
+}
+
+.customization-tabs {
+    display: flex;
+    background: #fff;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 0;
+}
+
+.customization-tabs .nav-tab {
+    padding: 15px 25px;
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.customization-tabs .nav-tab:hover {
+    background: #f8f9fa;
+    color: #0073aa;
+}
+
+.customization-tabs .nav-tab.active {
+    background: #0073aa;
+    color: #fff;
+}
+
+.customization-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.control-group {
+    margin-bottom: 30px;
+}
+
+.control-group h3 {
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f1f1f1;
+    color: #23282d;
+    font-size: 16px;
+}
+
+.control-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.control-item {
+    flex: 1;
+    min-width: 250px;
+}
+
+.control-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #23282d;
+}
+
+.control-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.control-input:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.control-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 14px;
+}
+
+.control-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-picker {
+    width: 50px;
+    height: 35px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+    background: transparent;
+}
+
+.color-value {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.theme-presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.theme-preset {
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.theme-preset:hover {
+    border-color: #0073aa;
+    box-shadow: 0 2px 8px rgba(0,115,170,0.15);
+}
+
+.theme-preset.active {
+    border-color: #0073aa;
+    background: #f0f8ff;
+}
+
+.theme-preset h4 {
+    margin: 0 0 5px 0;
+    color: #23282d;
+}
+
+.theme-preset p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.theme-colors {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.theme-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f1f1;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #0073aa;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #005a87;
+    color: #fff;
+}
+
+.btn-secondary {
+    background: #f1f1f1;
+    color: #23282d;
+}
+
+.btn-secondary:hover {
+    background: #ddd;
+    color: #23282d;
+}
+
+.btn-danger {
+    background: #dc3232;
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #c62d2d;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.preview-section {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.preview-section h4 {
+    margin: 0 0 15px 0;
+    color: #23282d;
+}
+
+.preview-frame {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 300px;
+    padding: 20px;
+}
+
+.control-description {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.range-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #ddd;
+    outline: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #0073aa;
+    cursor: pointer;
+}
+
+.range-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #0073aa;
+    cursor: pointer;
+    border: none;
+}
+
+.range-value {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    background: #f1f1f1;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: 0.3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input:checked + .toggle-slider {
+    background-color: #0073aa;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.font-preview {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.notice {
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+    background: #fff;
+    border-radius: 0 4px 4px 0;
+}
+
+.notice.success {
+    border-left-color: #46b450;
+    background: #ecf7ed;
+}
+
+.notice.error {
+    border-left-color: #dc3232;
+    background: #fbeaea;
+}
+
+.notice.warning {
+    border-left-color: #ffb900;
+    background: #fff8e5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .customization-tabs {
+        flex-direction: column;
+    }
+    
+    .control-row {
+        flex-direction: column;
+    }
+    
+    .control-item {
+        min-width: 100%;
+    }
+    
+    .theme-presets {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

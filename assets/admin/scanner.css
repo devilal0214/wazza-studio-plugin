@@ -1,0 +1,121 @@
+.waza-scanner-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.waza-scanner-header {
+    margin-bottom: 25px;
+}
+
+.waza-scanner-header p {
+    font-size: 16px;
+    color: #646970;
+}
+
+.waza-scanner-viewport {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+    border: 4px solid #f0f0f1;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+}
+
+#waza-reader {
+    width: 100%;
+    min-height: 300px;
+}
+
+#waza-scanner-result {
+    margin-top: 30px;
+    min-height: 100px;
+}
+
+.waza-scanner-loading {
+    padding: 20px;
+    background: #f0f0f1;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.waza-scanner-success {
+    background: #d1e7dd;
+    color: #0f5132;
+    padding: 25px;
+    border-radius: 12px;
+    animation: slideUp 0.3s ease-out;
+}
+
+.waza-scanner-success h3 {
+    margin-top: 0;
+    color: #0f5132;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.waza-scanner-success .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.waza-verify-details {
+    text-align: left;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.waza-verify-details p {
+    margin: 8px 0;
+}
+
+.waza-scanner-error {
+    background: #f8d7da;
+    color: #842029;
+    padding: 25px;
+    border-radius: 12px;
+    animation: slideUp 0.3s ease-out;
+}
+
+.waza-scanner-error h3 {
+    margin-top: 0;
+    color: #842029;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.waza-scan-again {
+    margin-top: 15px !important;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .waza-scanner-container {
+        padding: 15px;
+    }
+
+    .waza-scanner-viewport {
+        border-radius: 8px;
+    }
+}

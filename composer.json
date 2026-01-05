@@ -1,0 +1,44 @@
+{
+    "name": "waza-studio/waza-booking",
+    "description": "A modern WordPress plugin for activity booking management with payments and QR verification",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Waza Studio",
+            "email": "dev@waza.studio"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.0",
+        "endroid/qr-code": "^4.8",
+        "razorpay/razorpay": "^2.9",
+        "stripe/stripe-php": "^10.0",
+        "monolog/monolog": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "wp-coding-standards/wpcs": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WazaBooking\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WazaBooking\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "phpcs": "phpcs --standard=WordPress src/",
+        "phpcbf": "phpcbf --standard=WordPress src/"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

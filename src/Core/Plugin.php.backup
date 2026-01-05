@@ -1,0 +1,432 @@
+<?php
+/**
+ * Main Plugin Class
+ * 
+ * @package WazaBooking\Core
+ */
+
+namespace WazaBooking\Core;
+
+use WazaBooking\Database\DatabaseManager;
+use WazaBooking\PostTypes\PostTypeManager;
+use WazaBooking\API\RestApiManager;
+use WazaBooking\Admin\AdminManager;
+use WazaBooking\Admin\CustomizationManager;
+use WazaBooking\Admin\SettingsManager;
+use WazaBooking\Admin\SlotManager;
+use WazaBooking\Email\EmailTemplateManager;
+use WazaBooking\Frontend\FrontendManager;
+use WazaBooking\Frontend\ShortcodeManager;
+use WazaBooking\Frontend\AjaxHandler;
+use WazaBooking\Payment\PaymentManager;
+use WazaBooking\QR\QRManager;
+use WazaBooking\Notifications\NotificationManager;
+use WazaBooking\Security\SecurityManager;
+use WazaBooking\User\UserAccountManager;
+use WazaBooking\Integrations\ElementorIntegration;
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Main Plugin Class
+ */
+final class Plugin {
+    
+    /**
+     * Plugin instance
+     * 
+     * @var Plugin|null
+     */
+    private static $instance = null;
+    
+    /**
+     * Database manager
+     * 
+     * @var DatabaseManager
+     */
+    private $database_manager;
+    
+    /**
+     * Post type manager
+     * 
+     * @var PostTypeManager
+     */
+    private $post_type_manager;
+    
+    /**
+     * REST API manager
+     * 
+     * @var RestApiManager
+     */
+    private $rest_api_manager;
+    
+    /**
+     * Admin manager
+     * 
+     * @var AdminManager
+     */
+    private $admin_manager;
+    
+    /**
+     * Frontend manager
+     * 
+     * @var FrontendManager
+     */
+    private $frontend_manager;
+    
+    /**
+     * Shortcode manager
+     * 
+     * @var ShortcodeManager
+     */
+    private $shortcode_manager;
+    
+    /**
+     * AJAX handler
+     * 
+     * @var AjaxHandler
+     */
+    private $ajax_handler;
+    
+    /**
+     * Payment manager
+     * 
+     * @var PaymentManager
+     */
+    private $payment_manager;
+    
+    /**
+     * QR manager
+     * 
+     * @var QRManager
+     */
+    private $qr_manager;
+    
+    /**
+     * Notification manager
+     * 
+     * @var NotificationManager
+     */
+    private $notification_manager;
+    
+    /**
+     * Security manager
+     * 
+     * @var SecurityManager
+     */
+    private $security_manager;
+    
+    /**
+     * Settings manager
+     * 
+     * @var SettingsManager
+     */
+    private $settings_manager;
+    
+    /**
+     * Slot manager
+     * 
+     * @var SlotManager
+     */
+    private $slot_manager;
+    
+    /**
+     * User account manager
+     * 
+     * @var UserAccountManager
+     */
+    private $user_account_manager;
+    
+    /**
+     * Customization manager
+     * 
+     * @var CustomizationManager
+     */
+    private $customization_manager;
+    
+    /**
+        $this->frontend_manager = new FrontendManager();
+        $this->shortcode_manager = new ShortcodeManager();
+        $this->ajax_handler = new AjaxHandler();
+        $this->payment_manager = new PaymentManager();
+        $this->qr_manager = new QRManager();
+        $this->security_manager = new SecurityManager();
+        $this->user_account_manager = new UserAccountManager();
+        $this->customization_manager = new CustomizationManager();
+        $this->settings_manager = new SettingsManager();
+        $this->slot_manager = new SlotManager();
+        $this->email_template_manager = new EmailTemplateManager();
+        $this->notification_manager = new NotificationManager();
+        
+        // Inject dependencies
+        $this->notification_manager->set_email_template_manager($this->email_template_manager);
+        
+        // Initialize Elementor integration if Elementor is active
+        if (class_exists('\Elementor\Plugin')) {
+            try {
+                $this->elementor_integration = new ElementorIntegration();
+            } catch (Exception $e) {
+                error_log('Waza Booking: Failed to initialize Elementor integration - ' . $e->getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Load plugin textdomain for translations
+     */
+    public function load_textdomain() {
+        load_plugin_textdomain(
+            'waza-booking',
+            false,
+            dirname(WAZA_BOOKING_PLUGIN_BASENAME) . '/languages'
+        );
+    }
+    
+    /**
+     * Initialize custom post types
+     */
+    public function init_post_types() {
+        $this->post_type_manager->init();
+    }
+    
+    /**
+     * Initialize REST API
+     */
+    public function init_rest_api() {
+        $this->rest_api_manager->init();
+    }
+    
+    /**
+     * Initialize admin functionality
+     */
+    public function init_admin() {
+        if (is_admin()) {
+            $this->admin_manager->init();
+            $this->settings_manager->init();
+            
+            // Ensure admin menu is registered as a fallback
+            add_action('admin_menu', [$this, 'ensure_admin_menu'], 99);
+        }
+    }
+    
+    /**
+     * Ensure admin menu is registered (fallback)
+     */
+    public function ensure_admin_menu() {
+        // Check if menu was already registered by AdminManager
+        global $admin_page_hooks;
+        
+        if (!isset($admin_page_hooks['waza-booking']) && current_user_can('manage_waza')) {
+            // Register the main menu if not already registered
+            add_menu_page(
+                __('Waza Booking', 'waza-booking'),
+                __('Waza', 'waza-booking'),
+                'manage_waza',
+                'waza-booking',
+                [$this->admin_manager, 'dashboard_page'],
+                'dashicons-calendar-alt',
+                30
+            );
+            
+            // Add essential submenus
+            add_submenu_page('waza-booking', __('Dashboard', 'waza-booking'), __('Dashboard', 'waza-booking'), 'manage_options', 'waza-booking', [$this->admin_manager, 'dashboard_page']);
+            add_submenu_page('waza-booking', __('Email Templates', 'waza-booking'), __('Email Templates', 'waza-booking'), 'manage_options', 'waza-email-templates', [$this->admin_manager, 'email_templates_page']);
+            add_submenu_page('waza-booking', __('Customization', 'waza-booking'), __('Customization', 'waza-booking'), 'manage_options', 'waza-customization', [$this->admin_manager, 'customization_page']);
+            add_submenu_page('waza-booking', __('Settings', 'waza-booking'), __('Settings', 'waza-booking'), 'manage_options', 'waza-settings', [$this->admin_manager, 'settings_page']);
+            
+            error_log('Waza Booking: Fallback admin menu registered');
+        }
+    }
+    
+
+    
+    /**
+     * Initialize frontend functionality
+     */
+    public function init_frontend() {
+        if (!is_admin()) {
+            $this->frontend_manager->init();
+        }
+        
+        // Initialize managers that work on both frontend and backend
+        $this->user_account_manager->init();
+        $this->payment_manager->init();
+    }
+    
+    /**
+     * Get database manager
+     * 
+     * @return DatabaseManager
+     */
+    public function get_database_manager() {
+        return $this->database_manager;
+    }
+    
+    /**
+     * Get admin manager
+     * 
+     * @return AdminManager
+     */
+    public function get_admin_manager() {
+        return $this->admin_manager;
+    }
+    
+    /**
+     * Get post type manager
+     * 
+     * @return PostTypeManager
+     */
+    public function get_post_type_manager() {
+        return $this->post_type_manager;
+    }
+    
+    /**
+     * Get frontend manager
+     * 
+     * @return FrontendManager
+     */
+    public function get_frontend_manager() {
+        return $this->frontend_manager;
+    }
+    
+    /**
+     * Get REST API manager
+     * 
+     * @return RestApiManager
+     */
+    public function get_rest_api_manager() {
+        return $this->rest_api_manager;
+    }
+    
+    /**
+     * Get AJAX handler
+     * 
+     * @return AjaxHandler
+     */
+    public function get_ajax_handler() {
+        return $this->ajax_handler;
+    }
+    
+    /**
+     * Get payment manager
+     * 
+     * @return PaymentManager
+     */
+    public function get_payment_manager() {
+        return $this->payment_manager;
+    }
+    
+    /**
+     * Get QR manager
+     * 
+     * @return QRManager
+     */
+    public function get_qr_manager() {
+        return $this->qr_manager;
+    }
+    
+    /**
+     * Get notification manager
+     * 
+     * @return NotificationManager
+     */
+    public function get_notification_manager() {
+        return $this->notification_manager;
+    }
+    
+    /**
+     * Get security manager
+     * 
+     * @return SecurityManager
+     */
+    public function get_security_manager() {
+        return $this->security_manager;
+    }
+    
+    /**
+     * Get shortcode manager
+     * 
+     * @return ShortcodeManager
+     */
+    public function get_shortcode_manager() {
+        return $this->shortcode_manager;
+    }
+    
+    /**
+     * Get user account manager
+     * 
+     * @return UserAccountManager
+     */
+    public function get_user_account_manager() {
+        return $this->user_account_manager;
+    }
+    
+    /**
+     * Get customization manager
+     * 
+     * @return CustomizationManager
+     */
+    public function get_customization_manager() {
+        return $this->customization_manager;
+    }
+    
+    /**
+     * Get settings manager
+     * 
+     * @return SettingsManager
+     */
+    public function get_settings_manager() {
+        return $this->settings_manager;
+    }
+    
+    /**
+     * Get slot manager
+     * 
+     * @return SlotManager
+     */
+    public function get_slot_manager() {
+        return $this->slot_manager;
+    }
+    
+    /**
+     * Get email template manager
+     * 
+     * @return EmailTemplateManager
+     */
+    public function get_email_template_manager() {
+        return $this->email_template_manager;
+    }
+    
+    /**
+     * Get Elementor integration
+     * 
+     * @return ElementorIntegration|null
+     */
+    public function get_elementor_integration() {
+        return $this->elementor_integration;
+    }
+    
+    /**
+     * Check if Elementor integration is available
+     * 
+     * @return bool
+     */
+    public function has_elementor_integration() {
+        return $this->elementor_integration !== null;
+    }
+    
+    /**
+     * Prevent cloning
+     */
+    private function __clone() {}
+    
+    /**
+     * Prevent unserialization
+     */
+    public function __wakeup() {
+        throw new \Exception('Cannot unserialize singleton');
+    }
+}

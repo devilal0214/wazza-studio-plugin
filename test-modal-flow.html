@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modal Flow</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="assets/frontend.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+        }
+        .test-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            max-width: 600px;
+        }
+        .test-day {
+            border: 1px solid #ccc;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .test-day:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Booking Modal Flow</h1>
+    <p>Click on a day to test the modal:</p>
+    
+    <div class="test-calendar">
+        <div class="test-day waza-calendar-day" data-date="2026-01-15">15</div>
+        <div class="test-day waza-calendar-day" data-date="2026-01-16">16</div>
+        <div class="test-day waza-calendar-day" data-date="2026-01-17">17</div>
+        <div class="test-day waza-calendar-day" data-date="2026-01-18">18</div>
+        <div class="test-day waza-calendar-day" data-date="2026-01-19">19</div>
+    </div>
+
+    <script>
+        // Mock AJAX setup
+        var waza_frontend = {
+            ajax_url: 'http://localhost/wazza/wp-admin/admin-ajax.php',
+            nonce: 'test_nonce',
+            appearance: {
+                step_labels: 'Select Time,Details,Your Info,Payment,Done'
+            }
+        };
+
+        // Test function to open modal
+        function testOpenModal(date) {
+            console.log('Opening modal for date:', date);
+            
+            // Mock slots HTML
+            const slotsHtml = `
+                <div class="waza-slots-list">
+                    <div class="waza-slot-item">
+                        <div class="waza-slot-time">10:00 AM - 11:00 AM</div>
+                        <button class="waza-select-slot" data-slot-id="123">Book Now</button>
+                    </div>
+                    <div class="waza-slot-item">
+                        <div class="waza-slot-time">2:00 PM - 3:00 PM</div>
+                        <button class="waza-select-slot" data-slot-id="124">Book Now</button>
+                    </div>
+                </div>
+            `;
+            
+            const dateStr = date;
+            const stepLabels = ['Select Time', 'Details', 'Your Info', 'Payment', 'Done'];
+            
+            const modalHtml = `
+                <div id="waza-booking-modal" class="waza-modal">
+                    <div class="waza-modal-content waza-booking-modal-content">
+                        <div class="waza-modal-header">
+                            <h3 class="waza-modal-title">Complete Booking - ${dateStr}</h3>
+                            <button class="waza-close">&times;</button>
+                        </div>
+                        <div class="waza-modal-body">
+                            <div class="waza-booking-form-wrapper">
+                                <!-- Progress Bar -->
+                                <div class="waza-progress-bar-container">
+                                    <div class="waza-progress-bar-segment active" data-step="1">
+                                        <div class="waza-progress-bar-label">${stepLabels[0]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="2">
+                                        <div class="waza-progress-bar-label">${stepLabels[1]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="3">
+                                        <div class="waza-progress-bar-label">${stepLabels[2]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="4">
+                                        <div class="waza-progress-bar-label">${stepLabels[3]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                    <div class="waza-progress-bar-segment" data-step="5">
+                                        <div class="waza-progress-bar-label">${stepLabels[4]}</div>
+                                        <div class="waza-progress-bar-fill"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 1: Slot Selection -->
+                                <div class="waza-step-section active" data-step="1">
+                                    <h4>Select a time slot</h4>
+                                    ${slotsHtml}
+                                </div>
+                                
+                                <!-- Steps 2-5 will be loaded dynamically -->
+                                <div id="waza-booking-steps-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(modalHtml);
+            $('#waza-booking-modal').show();
+            console.log('Modal HTML added and shown');
+        }
+
+        // Click handler
+        $(document).on('click', '.test-day', function() {
+            const date = $(this).data('date');
+            testOpenModal(date);
+        });
+
+        // Close modal
+        $(document).on('click', '.waza-close', function() {
+            $('#waza-booking-modal').remove();
+        });
+
+        console.log('Test page loaded. Click on a day to open modal.');
+    </script>
+</body>
+</html>
