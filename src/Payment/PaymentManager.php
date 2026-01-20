@@ -75,6 +75,7 @@ class PaymentManager {
     private function initialize_razorpay() {
         $key_id = SettingsManager::get_setting('razorpay_key_id');
         $key_secret = SettingsManager::get_setting('razorpay_key_secret');
+        $razorpay_enabled = SettingsManager::get_setting('razorpay_enabled');
         
         if ($key_id && $key_secret) {
             try {
@@ -83,14 +84,30 @@ class PaymentManager {
                     error_log('Waza: Razorpay API initialized successfully');
                 } else {
                     error_log('Waza: Razorpay SDK not found, payment will not work');
-                    add_action('admin_notices', function() {
-                        echo '<div class="notice notice-error"><p>';
-                        echo __('Waza Booking: Razorpay SDK not found. Please run: composer install', 'waza-booking');
-                        echo '</p></div>';
-                    });
+                    // Only show notice if Razorpay is actually enabled in settings
+                    if ($razorpay_enabled === '1' || $razorpay_enabled === 'on') {
+                        add_action('admin_notices', function() {
+                            if (current_user_can('manage_options')) {
+                                echo '<div class="notice notice-error is-dismissible"><p>';
+                                echo '<strong>' . __('Waza Booking:', 'waza-booking') . '</strong> ';
+                                echo __('Razorpay SDK not loaded. Vendor autoloader may need regeneration.', 'waza-booking');
+                                echo '</p></div>';
+                            }
+                        });
+                    }
                 }
             } catch (\Exception $e) {
                 error_log('Waza: Failed to initialize Razorpay: ' . $e->getMessage());
+                if ($razorpay_enabled === '1' || $razorpay_enabled === 'on') {
+                    add_action('admin_notices', function() use ($e) {
+                        if (current_user_can('manage_options')) {
+                            echo '<div class="notice notice-error is-dismissible"><p>';
+                            echo '<strong>' . __('Waza Booking:', 'waza-booking') . '</strong> ';
+                            echo esc_html($e->getMessage());
+                            echo '</p></div>';
+                        }
+                    });
+                }
             }
         }
     }

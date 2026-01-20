@@ -6,7 +6,6 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'WpOrg\\Requests\\' => array($vendorDir . '/rmccue/requests/src'),
     'WazaBooking\\' => array($baseDir . '/src'),
     'Stripe\\' => array($vendorDir . '/stripe/stripe-php/lib'),
     'Razorpay\\Tests\\' => array($vendorDir . '/razorpay/razorpay/tests'),

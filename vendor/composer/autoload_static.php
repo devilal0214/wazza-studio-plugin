@@ -7,14 +7,12 @@ namespace Composer\Autoload;
 class ComposerStaticInit273f7fd7543afe0ba1048f2b8661c0e1
 {
     public static $files = array (
-        '941748b3c8cae4466c827dfb5ca9602a' => __DIR__ . '/..' . '/rmccue/requests/library/Deprecated.php',
         '13906c19e3d8fcd1341b24ed4d51cf72' => __DIR__ . '/..' . '/razorpay/razorpay/Deprecated.php',
     );
 
     public static $prefixLengthsPsr4 = array (
         'W' =>
         array (
-            'WpOrg\\Requests\\' => 15,
             'WazaBooking\\' => 12,
         ),
         'S' =>
@@ -49,10 +47,6 @@ class ComposerStaticInit273f7fd7543afe0ba1048f2b8661c0e1
     );
 
     public static $prefixDirsPsr4 = array (
-        'WpOrg\\Requests\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/rmccue/requests/src',
-        ),
         'WazaBooking\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
