@@ -16,6 +16,17 @@ $rental_types = $rental_manager ? $rental_manager->get_rental_types() : [];
 $durations = $rental_manager ? $rental_manager->get_durations() : [];
 $pricing = $settings['pricing'] ?? [];
 $currency_symbol = $settings['currency_symbol'] ?? '₹';
+
+// Helper function to ensure proper keys (handles both numeric and string keys)
+function ensure_rental_type_key($key, $index) {
+    $key_map = [0 => 'rehearsal', 1 => 'shoot', 2 => 'commercial'];
+    return is_numeric($key) ? ($key_map[$key] ?? $key) : $key;
+}
+
+function ensure_duration_key($key, $index) {
+    $key_map = [0 => 'hourly', 1 => '3hrs', 2 => 'half_day', 3 => 'full_day'];
+    return is_numeric($key) ? ($key_map[$key] ?? $key) : $key;
+}
 ?>
 
 <div class="waza-rental-container">
@@ -26,14 +37,22 @@ $currency_symbol = $settings['currency_symbol'] ?? '₹';
 
     <!-- Pricing Cards -->
     <div class="waza-rental-pricing">
-        <?php foreach ($rental_types as $type_key => $type) : ?>
-            <div class="pricing-card <?php echo esc_attr($type_key); ?>">
+        <?php 
+        $index = 0;
+        foreach ($rental_types as $type_key => $type) : 
+            $normalized_key = ensure_rental_type_key($type_key, $index);
+        ?>
+            <div class="pricing-card <?php echo esc_attr($normalized_key); ?>">
                 <div class="pricing-header">
                     <span class="pricing-icon"><?php echo esc_html($type['icon'] ?? '🎨'); ?></span>
-                    <h3><?php echo esc_html(strtoupper($type['label'] ?? ucfirst($type_key))); ?></h3>
+                    <h3><?php echo esc_html(strtoupper($type['label'] ?? ucfirst($normalized_key))); ?></h3>
                 </div>
                 <div class="pricing-rates">
-                    <?php foreach ($durations as $dur_key => $duration) : ?>
+                    <?php 
+                    $dur_index = 0;
+                    foreach ($durations as $dur_key => $duration) : 
+                        $normalized_dur_key = ensure_duration_key($dur_key, $dur_index);
+                    ?>
                         <?php if (isset($pricing[$type_key][$dur_key]) && $pricing[$type_key][$dur_key] > 0) : ?>
                             <div class="rate-item">
                                 <strong><?php echo esc_html($currency_symbol . number_format($pricing[$type_key][$dur_key])); ?></strong> 
@@ -43,7 +62,9 @@ $currency_symbol = $settings['currency_symbol'] ?? '₹';
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
-                    <?php endforeach; ?>
+                    <?php 
+                        $dur_index++;
+                    endforeach; ?>
                 </div>
                 <?php if (!empty($type['includes'])) : ?>
                     <div class="pricing-includes">
@@ -80,7 +101,9 @@ $currency_symbol = $settings['currency_symbol'] ?? '₹';
                     </div>
                 <?php endif; ?>
             </div>
-        <?php endforeach; ?>
+        <?php 
+            $index++;
+        endforeach; ?>
     </div>
 
     <!-- Booking Form -->
@@ -119,11 +142,17 @@ $currency_symbol = $settings['currency_symbol'] ?? '₹';
                         <label for="rental_type"><?php esc_html_e('Rental Type', 'waza-booking'); ?> <span class="required">*</span></label>
                         <select id="rental_type" name="rental_type" required>
                             <option value=""><?php esc_html_e('Select Rental Type', 'waza-booking'); ?></option>
-                            <?php foreach ($rental_types as $type_key => $type) : ?>
-                                <option value="<?php echo esc_attr($type_key); ?>">
+                            <?php 
+                            $index = 0;
+                            foreach ($rental_types as $type_key => $type) : 
+                                $normalized_key = ensure_rental_type_key($type_key, $index);
+                            ?>
+                                <option value="<?php echo esc_attr($normalized_key); ?>">
                                     <?php echo esc_html($type['icon'] . ' ' . $type['label']); ?>
                                 </option>
-                            <?php endforeach; ?>
+                            <?php 
+                                $index++;
+                            endforeach; ?>
                         </select>
                     </div>
 
@@ -131,14 +160,20 @@ $currency_symbol = $settings['currency_symbol'] ?? '₹';
                         <label for="duration_type"><?php esc_html_e('Duration', 'waza-booking'); ?> <span class="required">*</span></label>
                         <select id="duration_type" name="duration_type" required>
                             <option value=""><?php esc_html_e('Select Duration', 'waza-booking'); ?></option>
-                            <?php foreach ($durations as $dur_key => $duration) : ?>
-                                <option value="<?php echo esc_attr($dur_key); ?>">
+                            <?php 
+                            $dur_index = 0;
+                            foreach ($durations as $dur_key => $duration) : 
+                                $normalized_dur_key = ensure_duration_key($dur_key, $dur_index);
+                            ?>
+                                <option value="<?php echo esc_attr($normalized_dur_key); ?>">
                                     <?php echo esc_html($duration['label']); ?>
                                     <?php if ($duration['hours'] > 1) : ?>
                                         (<?php echo esc_html($duration['hours']); ?> hours)
                                     <?php endif; ?>
                                 </option>
-                            <?php endforeach; ?>
+                            <?php 
+                                $dur_index++;
+                            endforeach; ?>
                         </select>
                     </div>
                 </div>

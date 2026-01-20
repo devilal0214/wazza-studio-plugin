@@ -549,7 +549,9 @@ class ShortcodeManager {
         $instructor_id = get_post_meta($activity->ID, '_waza_instructor_id', true);
         $instructor = get_user_by('id', $instructor_id);
         $price = get_post_meta($activity->ID, '_waza_price', true);
+        $price = !empty($price) && is_numeric($price) ? floatval($price) : 0.00;
         $duration = get_post_meta($activity->ID, '_waza_duration', true);
+        $duration = !empty($duration) && is_numeric($duration) ? intval($duration) : 60;
         $featured_image = get_the_post_thumbnail_url($activity->ID, 'medium');
         
         ?>
