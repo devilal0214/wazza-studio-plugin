@@ -6,8 +6,8 @@
  * URL: http://localhost/wazza/wp-content/plugins/waza-studio-app/fix-slots-table.php
  * OR: https://wazastudio.com/wp-content/plugins/waza-studio-app/fix-slots-table.php
  */
-
-require_once('../../../wp-load.php');
+$wp_load = __DIR__ . '/../../../wp-load.php';
+require_once $wp_load;
 
 if (!current_user_can('manage_options')) {
     die('Access denied. Admin only.');

@@ -66,14 +66,27 @@ $activities_query = new WP_Query($args);
     </div>
     <?php endif; ?>
 
+    <?php if (current_user_can('manage_options')) : ?>
+    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+        <strong>Debug Info (Admin Only):</strong><br>
+        Total Activities Found: <?php echo $activities_query->found_posts; ?><br>
+        Posts in Current Page: <?php echo $activities_query->post_count; ?><br>
+        <?php if ($activities_query->post_count === 0) : ?>
+            <br><strong style="color: #d63384;">⚠️ No activities found!</strong><br>
+            <em>Check: 1) Do published waza_activity posts exist? 2) Run debug-activities.php to diagnose</em>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <div class="activity-grid" id="activity-grid">
         <?php
         if ($activities_query->have_posts()) :
             while ($activities_query->have_posts()) : $activities_query->the_post();
                 $activity_id = get_the_ID();
-                $price = get_post_meta($activity_id, '_waza_activity_price', true);
-                $duration = get_post_meta($activity_id, '_waza_activity_duration', true);
-                $rating = get_post_meta($activity_id, '_waza_activity_rating', true) ?: '0';
+                // Use correct meta keys (_waza_price not _waza_activity_price)
+                $price = get_post_meta($activity_id, '_waza_price', true);
+                $duration = get_post_meta($activity_id, '_waza_duration', true);
+                $rating = get_post_meta($activity_id, '_waza_rating', true) ?: '0';
                 $booking_count = get_post_meta($activity_id, '_waza_booking_count', true) ?: 0;
                 $terms = get_the_terms($activity_id, 'waza_instructor_specialty');
                 $category = !empty($terms) ? $terms[0]->name : 'General';

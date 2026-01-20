@@ -1675,7 +1675,8 @@ class AdminManager {
         $slot_id = intval($_POST['slot_id'] ?? 0);
         $nonce = $_POST['nonce'] ?? '';
         
-        if (!wp_verify_nonce($nonce, 'waza_approve_workshop_' . $slot_id)) {
+        // Accept both nonce formats for backward compatibility
+        if (!wp_verify_nonce($nonce, 'waza_approve_slot_' . $slot_id) && !wp_verify_nonce($nonce, 'waza_approve_workshop_' . $slot_id)) {
             wp_send_json_error(['message' => __('Invalid security token', 'waza-booking')]);
         }
         

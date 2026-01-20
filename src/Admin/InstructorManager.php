@@ -255,6 +255,54 @@ class InstructorManager {
         
         $new_status = $post->post_status === 'publish' ? 'pending' : 'publish';
         
+        // If approving (pending -> publish), create/update user account automatically
+        if ($new_status === 'publish') {
+            $user_id = get_post_meta($instructor_id, '_waza_user_id', true);
+            $email = get_post_meta($instructor_id, '_waza_email', true);
+            
+            // Check if user already exists and is linked
+            if ($user_id && get_userdata($user_id)) {
+                // User exists - verify and update role to waza_instructor
+                $user = new \WP_User($user_id);
+                $current_roles = $user->roles;
+                
+                // Force update role if not waza_instructor
+                if (!in_array('waza_instructor', $current_roles)) {
+                    $user->set_role('waza_instructor');
+                }
+            } else if ($email && is_email($email)) {
+                // No linked user - check if user exists with this email
+                $existing_user = get_user_by('email', $email);
+                
+                if ($existing_user) {
+                    // Link to existing user and set correct role
+                    $existing_user->set_role('waza_instructor');
+                    update_post_meta($instructor_id, '_waza_user_id', $existing_user->ID);
+                } else {
+                    // Create new user
+                    $username = sanitize_user(strtolower(str_replace(' ', '_', $post->post_title)), true);
+                    $base_username = $username;
+                    $counter = 1;
+                    while (username_exists($username)) {
+                        $username = $base_username . '_' . $counter;
+                        $counter++;
+                    }
+                    
+                    $password = wp_generate_password(20, true, true);
+                    $new_user_id = wp_create_user($username, $password, $email);
+                    
+                    if (!is_wp_error($new_user_id)) {
+                        // Assign waza_instructor role (NOT subscriber)
+                        $user = new \WP_User($new_user_id);
+                        $user->set_role('waza_instructor');
+                        
+                        // Link to instructor post
+                        update_post_meta($instructor_id, '_waza_user_id', $new_user_id);
+                    }
+                }
+            }
+        }
+        
         wp_update_post([
             'ID' => $instructor_id,
             'post_status' => $new_status
