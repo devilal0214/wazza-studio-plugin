@@ -13,8 +13,10 @@ use WazaBooking\API\RestApiManager;
 use WazaBooking\Admin\AdminManager;
 use WazaBooking\Admin\CustomizationManager;
 use WazaBooking\Admin\SettingsManager;
+use WazaBooking\Admin\RentalSettingsManager;
 use WazaBooking\Admin\SlotManager;
 use WazaBooking\Admin\AttendanceManager;
+use WazaBooking\Admin\AttendanceScanner;
 use WazaBooking\Admin\ActivityLogsManager;
 use WazaBooking\Email\EmailTemplateManager;
 use WazaBooking\Frontend\FrontendManager;
@@ -102,6 +104,20 @@ final class Plugin {
     private $payment_manager;
     
     /**
+     * Checkout page handler
+     * 
+     * @var \WazaBooking\Payment\CheckoutPageHandler
+     */
+    private $checkout_page_handler;
+    
+    /**
+     * QR Scanner manager
+     * 
+     * @var \WazaBooking\Admin\QRScannerManager
+     */
+    private $qr_scanner_manager;
+    
+    /**
      * QR manager
      * 
      * @var QRManager
@@ -156,6 +172,13 @@ final class Plugin {
      * @var CustomizationManager
      */
     private $customization_manager;
+    
+    /**
+     * Rental settings manager
+     * 
+     * @var RentalSettingsManager
+     */
+    private $rental_settings_manager;
     
     /**
      * Instructor manager
@@ -248,14 +271,26 @@ final class Plugin {
      */
     private $announcements_manager;
     
+    /**
+     * Instructor frontend manager
+     * 
+     * @var \WazaBooking\Frontend\InstructorFrontend
+     */
+    private $instructor_frontend;
+    
     /**     * Attendance manager
      * 
      * @var AttendanceManager
      */
     private $attendance_manager;
     
-    /**
-     * Activity logs manager
+    /**     * Attendance scanner
+     * 
+     * @var AttendanceScanner
+     */
+    private $attendance_scanner;
+    
+    /**     * Activity logs manager
      * 
      * @var ActivityLogsManager
      */
@@ -273,6 +308,34 @@ final class Plugin {
      * @var \WazaBooking\Frontend\SlotDetailsManager
      */
     private $slot_details_manager;
+    
+    /**
+     * Rental manager
+     * 
+     * @var \WazaBooking\Rental\RentalManager
+     */
+    private $rental_manager;
+    
+    /**
+     * Activity browser manager
+     * 
+     * @var \WazaBooking\Activity\ActivityBrowserManager
+     */
+    private $activity_browser_manager;
+    
+    /**
+     * Rental admin manager
+     * 
+     * @var \WazaBooking\Admin\RentalAdminManager
+     */
+    private $rental_admin_manager;
+    
+    /**
+     * Rental payment handler
+     * 
+     * @var \WazaBooking\Payment\RentalPaymentHandler
+     */
+    private $rental_payment_handler;
     
     /**
      * Private constructor to prevent direct instantiation
@@ -331,11 +394,16 @@ final class Plugin {
      * Priority 1 = translation, 5 = post types, 10 = admin/frontend
      */
     private function init_hooks() {
+        add_action('init', [$this, 'set_timezone'], 0); // Set timezone first
         add_action('init', [$this, 'load_textdomain'], 1);
         add_action('init', [$this, 'init_post_types'], 5);
         add_action('init', [$this, 'init_admin'], 10);
         add_action('init', [$this, 'init_frontend'], 10);
         add_action('rest_api_init', [$this, 'init_rest_api']);
+        
+        // Schedule auto-logout cron
+        add_action('wp', [$this, 'schedule_auto_logout_cron']);
+        add_action('waza_auto_logout_cron', [$this, 'process_auto_logout']);
     }
     
     /**
@@ -356,14 +424,22 @@ final class Plugin {
         $this->auto_logout_manager = new AutoLogoutManager();
         $this->customization_manager = new CustomizationManager();
         $this->settings_manager = new SettingsManager();
+        $this->rental_settings_manager = new RentalSettingsManager();
         $this->slot_manager = new SlotManager();
         $this->email_template_manager = new EmailTemplateManager();
         $this->notification_manager = new NotificationManager();
         $this->instructor_manager = new \WazaBooking\Admin\InstructorManager();
         $this->scanner_manager = new \WazaBooking\Admin\ScannerManager();
         
+        // Initialize Enhanced Attendance Scanner
+        $enhanced_scanner = new \WazaBooking\Admin\EnhancedAttendanceScanner();
+        $enhanced_scanner->init();
+        
+        $this->instructor_frontend = new \WazaBooking\Frontend\InstructorFrontend();
+        
         // Initialize new managers
-        $this->workshop_manager = new \WazaBooking\Workshop\WorkshopManager();
+        // Workshop manager removed - instructors create time slots instead
+        // $this->workshop_manager = new \WazaBooking\Workshop\WorkshopManager();
         $this->icalendar_manager = new \WazaBooking\Calendar\ICalendarManager();
         $this->booking_confirmation_manager = new \WazaBooking\Booking\BookingConfirmationManager();
         $this->sms_manager = new \WazaBooking\Notifications\SMSManager();
@@ -373,9 +449,20 @@ final class Plugin {
         $this->activity_logger = new \WazaBooking\Logs\ActivityLogger();
         $this->announcements_manager = new \WazaBooking\Admin\AnnouncementsManager();
         $this->attendance_manager = new AttendanceManager();
+        $this->attendance_scanner = new AttendanceScanner();
         $this->activity_logs_manager = new ActivityLogsManager();
         $this->interactive_calendar_manager = new \WazaBooking\Frontend\InteractiveCalendarManager();
         $this->slot_details_manager = new \WazaBooking\Frontend\SlotDetailsManager();
+        $this->rental_manager = new \WazaBooking\Rental\RentalManager();
+        $this->activity_browser_manager = new \WazaBooking\Activity\ActivityBrowserManager();
+        $this->rental_admin_manager = new \WazaBooking\Admin\RentalAdminManager();
+        $this->rental_payment_handler = new \WazaBooking\Payment\RentalPaymentHandler();
+        $this->checkout_page_handler = new \WazaBooking\Payment\CheckoutPageHandler();
+        $this->qr_scanner_manager = new \WazaBooking\Admin\QRScannerManager();
+        
+        // Initialize managers
+        $this->attendance_scanner->init();
+        $this->qr_scanner_manager->init();
         
         // Inject dependencies
         $this->notification_manager->set_email_template_manager($this->email_template_manager);
@@ -390,8 +477,24 @@ final class Plugin {
         }
     }
     
-    /**
-     * Load plugin textdomain for translations
+    /**     * Set WordPress timezone to Asia/Kolkata (India)
+     */
+    public function set_timezone() {
+        // Ensure timezone is set to Asia/Kolkata if not already configured
+        $current_timezone = get_option('timezone_string');
+        
+        // Only set if timezone is empty or not Asia/Kolkata
+        if (empty($current_timezone) || !in_array($current_timezone, ['Asia/Kolkata', 'Asia/Calcutta'])) {
+            update_option('timezone_string', 'Asia/Kolkata');
+        }
+        
+        // Set PHP timezone for consistency
+        if (function_exists('date_default_timezone_set')) {
+            date_default_timezone_set(wp_timezone_string());
+        }
+    }
+    
+    /**     * Load plugin textdomain for translations
      */
     public function load_textdomain() {
         load_plugin_textdomain(
@@ -445,7 +548,7 @@ final class Plugin {
         $this->notification_manager->init();
         
         // Initialize new feature managers
-        $this->workshop_manager->init();
+        // $this->workshop_manager->init();
         $this->icalendar_manager->init();
         $this->booking_confirmation_manager->init();
         $this->sms_manager->init();
@@ -455,6 +558,7 @@ final class Plugin {
         $this->activity_logger->init();
         $this->announcements_manager->init();
         $this->attendance_manager->init();
+        $this->attendance_scanner->init();
         $this->activity_logs_manager->init();
         $this->interactive_calendar_manager->init();
         $this->slot_details_manager->init();
@@ -635,4 +739,79 @@ final class Plugin {
     public function __wakeup() {
         throw new \Exception('Cannot unserialize singleton');
     }
+    
+    /**
+     * Schedule auto-logout cron job
+     * Runs every 15 minutes to check for expired sessions
+     */
+    public function schedule_auto_logout_cron() {
+        if (!wp_next_scheduled('waza_auto_logout_cron')) {
+            wp_schedule_event(time(), 'every_15_minutes', 'waza_auto_logout_cron');
+        }
+    }
+    
+    /**
+     * Process auto-logout for students who haven't checked out
+     * Automatically marks exit for attendance records where:
+     * - Check-in exists but no check-out
+     * - Slot has ended more than 15 minutes ago
+     */
+    public function process_auto_logout() {
+        global $wpdb;
+        
+        // Find attendance records that need auto-logout
+        $records = $wpdb->get_results("
+            SELECT a.id, a.booking_id, a.user_id, a.slot_id
+            FROM {$wpdb->prefix}waza_attendance a
+            INNER JOIN {$wpdb->prefix}waza_slots s ON a.slot_id = s.id
+            WHERE a.check_in_time IS NOT NULL
+            AND a.check_out_time IS NULL
+            AND s.end_datetime < DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+        ");
+        
+        if (empty($records)) {
+            return; // No records to process
+        }
+        
+        $auto_logout_count = 0;
+        
+        foreach ($records as $record) {
+            $updated = $wpdb->update(
+                $wpdb->prefix . 'waza_attendance',
+                [
+                    'check_out_time' => current_time('mysql'),
+                    'exit_method' => 'auto'
+                ],
+                ['id' => $record->id],
+                ['%s', '%s'],
+                ['%d']
+            );
+            
+            if ($updated) {
+                $auto_logout_count++;
+                
+                // Log the auto-logout
+                error_log(sprintf(
+                    'Waza Booking: Auto-logout processed for attendance ID %d (Booking #%d, User #%d, Slot #%d)',
+                    $record->id,
+                    $record->booking_id,
+                    $record->user_id,
+                    $record->slot_id
+                ));
+            }
+        }
+        
+        if ($auto_logout_count > 0) {
+            error_log(sprintf('Waza Booking: Auto-logout completed. %d records processed.', $auto_logout_count));
+        }
+    }
 }
+
+// Register custom cron schedule
+add_filter('cron_schedules', function($schedules) {
+    $schedules['every_15_minutes'] = [
+        'interval' => 900, // 15 minutes in seconds
+        'display' => __('Every 15 Minutes', 'waza-booking')
+    ];
+    return $schedules;
+});

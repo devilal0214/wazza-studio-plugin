@@ -475,25 +475,41 @@ class PostTypeManager {
         $email = get_post_meta($post->ID, '_waza_email', true);
         $phone = get_post_meta($post->ID, '_waza_phone', true);
         $bio = get_post_meta($post->ID, '_waza_bio', true);
+        $activity_type = get_post_meta($post->ID, '_waza_activity_type', true);
         $experience = get_post_meta($post->ID, '_waza_experience', true);
         $certifications = get_post_meta($post->ID, '_waza_certifications', true);
+        $rating = get_post_meta($post->ID, '_waza_rating', true);
+        $social_links = get_post_meta($post->ID, '_waza_social_links', true) ?: [];
         $hourly_rate = get_post_meta($post->ID, '_waza_hourly_rate', true);
         
         echo '<table class="form-table">';
         
         echo '<tr>';
         echo '<th><label for="waza_email">' . esc_html__('Email', 'waza-booking') . '</label></th>';
-        echo '<td><input type="email" id="waza_email" name="waza_email" value="' . esc_attr($email) . '" /></td>';
+        echo '<td><input type="email" id="waza_email" name="waza_email" value="' . esc_attr($email) . '" class="regular-text" /></td>';
         echo '</tr>';
         
         echo '<tr>';
         echo '<th><label for="waza_phone">' . esc_html__('Phone', 'waza-booking') . '</label></th>';
-        echo '<td><input type="tel" id="waza_phone" name="waza_phone" value="' . esc_attr($phone) . '" /></td>';
+        echo '<td><input type="tel" id="waza_phone" name="waza_phone" value="' . esc_attr($phone) . '" class="regular-text" /></td>';
+        echo '</tr>';
+        
+        echo '<tr>';
+        echo '<th><label for="waza_activity_type">' . esc_html__('Primary Activity Type', 'waza-booking') . '</label></th>';
+        echo '<td>';
+        echo '<select id="waza_activity_type" name="waza_activity_type">';
+        echo '<option value="">' . esc_html__('Select Activity Type', 'waza-booking') . '</option>';
+        $activity_types = ['dance' => 'Dance', 'yoga' => 'Yoga', 'zumba' => 'Zumba', 'fitness' => 'Fitness Training', 'martial-arts' => 'Martial Arts', 'aerobics' => 'Aerobics', 'other' => 'Other'];
+        foreach ($activity_types as $value => $label) {
+            echo '<option value="' . esc_attr($value) . '" ' . selected($activity_type, $value, false) . '>' . esc_html__($label, 'waza-booking') . '</option>';
+        }
+        echo '</select>';
+        echo '</td>';
         echo '</tr>';
         
         echo '<tr>';
         echo '<th><label for="waza_bio">' . esc_html__('Bio', 'waza-booking') . '</label></th>';
-        echo '<td><textarea id="waza_bio" name="waza_bio" rows="4">' . esc_textarea($bio) . '</textarea></td>';
+        echo '<td><textarea id="waza_bio" name="waza_bio" rows="4" class="large-text">' . esc_textarea($bio) . '</textarea></td>';
         echo '</tr>';
         
         echo '<tr>';
@@ -503,12 +519,80 @@ class PostTypeManager {
         
         echo '<tr>';
         echo '<th><label for="waza_certifications">' . esc_html__('Certifications', 'waza-booking') . '</label></th>';
-        echo '<td><textarea id="waza_certifications" name="waza_certifications" rows="3">' . esc_textarea($certifications) . '</textarea></td>';
+        echo '<td><textarea id="waza_certifications" name="waza_certifications" rows="3" class="large-text">' . esc_textarea($certifications) . '</textarea></td>';
+        echo '</tr>';
+        
+        echo '<tr>';
+        echo '<th><label for="waza_rating">' . esc_html__('Rating', 'waza-booking') . '</label></th>';
+        echo '<td>';
+        echo '<select id="waza_rating" name="waza_rating">';
+        echo '<option value="">' . esc_html__('Select Rating', 'waza-booking') . '</option>';
+        echo '<option value="2" ' . selected($rating, 2, false) . '>⭐⭐ (2 Stars - Developing)</option>';
+        echo '<option value="3" ' . selected($rating, 3, false) . '>⭐⭐⭐ (3 Stars - Competent)</option>';
+        echo '<option value="5" ' . selected($rating, 5, false) . '>⭐⭐⭐⭐⭐ (5 Stars - Expert)</option>';
+        echo '</select>';
+        echo '</td>';
         echo '</tr>';
         
         echo '<tr>';
         echo '<th><label for="waza_hourly_rate">' . esc_html__('Hourly Rate (₹)', 'waza-booking') . '</label></th>';
         echo '<td><input type="number" id="waza_hourly_rate" name="waza_hourly_rate" value="' . esc_attr($hourly_rate) . '" min="0" step="0.01" /></td>';
+        echo '</tr>';
+        
+        echo '<tr>';
+        echo '<th><label>' . esc_html__('Social Links', 'waza-booking') . '</label></th>';
+        echo '<td>';
+        echo '<div id="instructor-social-links-container">';
+        
+        if (!empty($social_links) && is_array($social_links)) {
+            foreach ($social_links as $platform => $url) {
+                echo '<div class="social-link-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">';
+                echo '<select name="waza_social_platform[]" style="width: 150px;">';
+                $platforms = ['instagram' => 'Instagram', 'facebook' => 'Facebook', 'twitter' => 'Twitter', 'linkedin' => 'LinkedIn', 'youtube' => 'YouTube', 'website' => 'Website'];
+                foreach ($platforms as $key => $label) {
+                    echo '<option value="' . esc_attr($key) . '" ' . selected($platform, $key, false) . '>' . esc_html($label) . '</option>';
+                }
+                echo '</select>';
+                echo '<input type="url" name="waza_social_url[]" value="' . esc_url($url) . '" placeholder="https://..." style="flex: 1;">';
+                echo '<button type="button" class="button remove-social-link">×</button>';
+                echo '</div>';
+            }
+        } else {
+            echo '<div class="social-link-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">';
+            echo '<select name="waza_social_platform[]" style="width: 150px;">';
+            echo '<option value="instagram">Instagram</option>';
+            echo '<option value="facebook">Facebook</option>';
+            echo '<option value="twitter">Twitter</option>';
+            echo '<option value="linkedin">LinkedIn</option>';
+            echo '<option value="youtube">YouTube</option>';
+            echo '<option value="website">Website</option>';
+            echo '</select>';
+            echo '<input type="url" name="waza_social_url[]" placeholder="https://..." style="flex: 1;">';
+            echo '<button type="button" class="button remove-social-link">×</button>';
+            echo '</div>';
+        }
+        
+        echo '</div>';
+        echo '<button type="button" id="add-instructor-social-link" class="button" style="margin-top: 10px;">+ ' . esc_html__('Add Social Link', 'waza-booking') . '</button>';
+        echo '<script>
+        jQuery(document).ready(function($) {
+            $("#add-instructor-social-link").on("click", function() {
+                var newRow = $(".social-link-row:first").clone();
+                newRow.find("input").val("");
+                newRow.find("select").prop("selectedIndex", 0);
+                $("#instructor-social-links-container").append(newRow);
+            });
+            
+            $(document).on("click", ".remove-social-link", function() {
+                if ($(".social-link-row").length > 1) {
+                    $(this).closest(".social-link-row").remove();
+                } else {
+                    $(this).siblings("input").val("");
+                }
+            });
+        });
+        </script>';
+        echo '</td>';
         echo '</tr>';
         
         echo '</table>';
@@ -661,9 +745,11 @@ class PostTypeManager {
         $fields = [
             'waza_email' => 'sanitize_email',
             'waza_phone' => 'sanitize_text_field',
+            'waza_activity_type' => 'sanitize_text_field',
             'waza_bio' => 'sanitize_textarea_field',
             'waza_experience' => 'sanitize_text_field',
             'waza_certifications' => 'sanitize_textarea_field',
+            'waza_rating' => 'intval',
             'waza_hourly_rate' => 'sanitize_text_field'
         ];
         
@@ -671,6 +757,27 @@ class PostTypeManager {
             if (isset($_POST[$field])) {
                 update_post_meta($post_id, '_' . $field, $sanitize_func($_POST[$field]));
             }
+        }
+        
+        // Save social links
+        if (isset($_POST['waza_social_platform']) && isset($_POST['waza_social_url'])) {
+            $social_links = [];
+            $platforms = $_POST['waza_social_platform'];
+            $urls = $_POST['waza_social_url'];
+            
+            for ($i = 0; $i < count($platforms); $i++) {
+                if (!empty($urls[$i])) {
+                    $social_links[sanitize_text_field($platforms[$i])] = esc_url_raw($urls[$i]);
+                }
+            }
+            
+            update_post_meta($post_id, '_waza_social_links', $social_links);
+        }
+        
+        // Set activity type as taxonomy term if provided
+        if (!empty($_POST['waza_activity_type'])) {
+            $activity_type = sanitize_text_field($_POST['waza_activity_type']);
+            wp_set_object_terms($post_id, [$activity_type], 'waza_instructor_specialty');
         }
     }
     

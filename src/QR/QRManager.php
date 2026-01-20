@@ -95,6 +95,12 @@ class QRManager {
      */
     public function generate_qr_image($token, $size = 200) {
         try {
+            // Validate token
+            if (empty($token)) {
+                error_log('QR Code generation failed: Empty token provided');
+                return false;
+            }
+            
             $qr_code = new QrCode($token);
             $qr_code->setSize($size);
             

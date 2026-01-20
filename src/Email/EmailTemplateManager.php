@@ -444,6 +444,10 @@ class EmailTemplateManager {
             'welcome_email' => [
                 'subject' => 'Welcome to {site_name}!',
                 'content' => $this->get_default_welcome_template()
+            ],
+            'password_reset' => [
+                'subject' => 'Password Reset - {site_name}',
+                'content' => $this->get_default_password_reset_template()
             ]
         ];
         
@@ -749,17 +753,48 @@ class EmailTemplateManager {
                 
                 <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 24px;">Hello {user_name},</p>
                 
-                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 32px;">Welcome to {site_name}! We\'re thrilled to have you join our community.</p>
+                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 32px;">{message}</p>
                 
                 <div style="background: #EEF2FF; padding: 24px; border-radius: 8px; margin-bottom: 32px; border: 1px solid #C7D2FE;">
-                    <h3 style="margin-top: 0; color: #4F46E5; font-size: 18px; font-weight: 600; margin-bottom: 12px;">Getting Started</h3>
-                    <p style="font-size: 14px; line-height: 1.6; color: #4338CA; margin-bottom: 12px;">You can now browse and book our activities, manage your bookings, and much more!</p>
-                    <p style="margin: 0;"><a href="{site_url}" style="color: #4F46E5; text-decoration: none; font-weight: 600;">Visit our website</a> to explore available activities.</p>
+                    <h3 style="margin-top: 0; color: #4F46E5; font-size: 18px; font-weight: 600; margin-bottom: 12px;">Your Account Details</h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #4338CA; margin-bottom: 8px;"><strong>Username:</strong> {username}</p>
+                    <p style="font-size: 14px; line-height: 1.6; color: #4338CA; margin-bottom: 16px;"><strong>Email:</strong> {user_email}</p>
+                    <p style="margin: 16px 0;"><a href="{verification_url}{reset_url}{login_url}" style="display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">Get Started</a></p>
                 </div>
                 
-                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 24px;">If you have any questions or need assistance, don\'t hesitate to reach out to our support team.</p>
+                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 24px;">If you have any questions or need assistance, don\'t hesitate to reach out.</p>
                 
-                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 32px;">We look forward to providing you with amazing experiences!</p>
+                <div style="border-top: 1px solid #E5E7EB; padding-top: 24px; text-align: center;">
+                    <p style="font-size: 14px; color: #6B7280; margin: 0;">Best regards,<br>The {site_name} Team</p>
+                </div>
+            </div>
+        </div>';
+    }
+    
+    private function get_default_password_reset_template() {
+        return '
+        <div style="font-family: \'Inter\', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #F9FAFB; color: #111827;">
+            <div style="background: #FFFFFF; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #E5E7EB;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #F59E0B; margin: 0; font-size: 28px; font-weight: 700;">Password Reset Request</h1>
+                </div>
+                
+                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 24px;">Dear {user_name},</p>
+                
+                <p style="font-size: 16px; line-height: 1.6; color: #374151; margin-bottom: 32px;">{message}</p>
+                
+                <div style="background: #FFFBEB; padding: 24px; border-radius: 8px; margin-bottom: 32px; border: 1px solid #FCD34D; text-align: center;">
+                    <p style="font-size: 14px; line-height: 1.6; color: #92400E; margin-bottom: 16px;">Click the button below to set your password:</p>
+                    <a href="{reset_url}" style="display: inline-block; background: #F59E0B; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Set Password</a>
+                    <p style="font-size: 12px; color: #92400E; margin-top: 16px; margin-bottom: 0;">This link will expire in 24 hours for security purposes.</p>
+                </div>
+                
+                <div style="background: #F9FAFB; padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #E5E7EB;">
+                    <p style="font-size: 14px; line-height: 1.6; color: #6B7280; margin: 0;"><strong>Account Information:</strong></p>
+                    <p style="font-size: 14px; line-height: 1.6; color: #6B7280; margin: 8px 0 0 0;">Username: {username}<br>Email: {user_email}</p>
+                </div>
+                
+                <p style="font-size: 14px; line-height: 1.6; color: #6B7280; margin-bottom: 24px;"><strong>Note:</strong> If you did not request this password reset, please ignore this email. Your password will remain unchanged.</p>
                 
                 <div style="border-top: 1px solid #E5E7EB; padding-top: 24px; text-align: center;">
                     <p style="font-size: 14px; color: #6B7280; margin: 0;">Best regards,<br>The {site_name} Team</p>

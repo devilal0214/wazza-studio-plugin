@@ -1,0 +1,41 @@
+# Debug and test files
+debug*.php
+test*.php
+fix*.php
+fix*.sh
+inspect*.php
+seed*.php
+*_BACKUP.php
+*.backup
+
+# Temporary vendor fix scripts (for emergencies only)
+regenerate-vendor.php
+add-rental-column.php
+install-plugin.php
+
+# Composer
+vendor/
+composer.lock
+
+# Node modules (if any)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log files
+*.log
+error_log
+
+# Backup files
+*.bak
+*.old
+*~

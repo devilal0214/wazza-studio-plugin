@@ -1,53 +1,390 @@
+/* Waza QR Scanner Styles */
 .waza-scanner-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
     background: #fff;
-    padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    text-align: center;
 }
 
 .waza-scanner-header {
-    margin-bottom: 25px;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.waza-scanner-header h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #1e293b;
 }
 
 .waza-scanner-header p {
-    font-size: 16px;
-    color: #646970;
+    font-size: 1rem;
+    color: #64748b;
 }
 
-.waza-scanner-viewport {
-    position: relative;
-    max-width: 500px;
+/* Tabs */
+.waza-scanner-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.waza-tab-btn {
+    padding: 1rem 2rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.3s;
+}
+
+.waza-tab-btn:hover {
+    color: #4F46E5;
+}
+
+.waza-tab-btn.active {
+    color: #4F46E5;
+    border-bottom-color: #4F46E5;
+}
+
+.waza-tab-content {
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.waza-tab-content.active {
+    display: block;
+}
+
+/* QR Reader */
+.waza-qr-reader-container {
+    max-width: 600px;
     margin: 0 auto;
-    border: 4px solid #f0f0f1;
-    border-radius: 16px;
-    overflow: hidden;
-    background: #000;
 }
 
-#waza-reader {
+#qr-reader {
     width: 100%;
-    min-height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-#waza-scanner-result {
-    margin-top: 30px;
-    min-height: 100px;
+#qr-reader video {
+    border-radius: 12px;
 }
 
-.waza-scanner-loading {
-    padding: 20px;
-    background: #f0f0f1;
+#qr-reader-status {
+    margin-top: 1.5rem;
+    text-align: center;
+    padding: 1rem;
+    background: #f1f5f9;
     border-radius: 8px;
+    color: #475569;
+}
+
+/* Manual Entry */
+.waza-manual-entry {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.waza-manual-entry h3 {
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+}
+
+.waza-input-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.waza-input-group input {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.waza-input-group input:focus {
+    outline: none;
+    border-color: #4F46E5;
+}
+
+/* Student Details Modal */
+.student-detail-card {
+    background: white;
+    padding: 2rem;
+}
+
+.student-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.student-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.student-info h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    color: #1e293b;
+}
+
+.student-info p {
+    margin: 0.25rem 0;
+    color: #64748b;
+}
+
+.booking-details {
+    margin-bottom: 2rem;
+}
+
+.booking-details h5 {
+    margin-bottom: 1rem;
+    color: #1e293b;
+    font-size: 1.25rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-row .label {
+    font-weight: 600;
+    color: #64748b;
+}
+
+.detail-row .value {
+    color: #1e293b;
+}
+
+.attendance-status {
+    margin-bottom: 2rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin: 0.5rem;
+}
+
+.status-badge.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.attendance-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.waza-btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+}
+
+/* Stats */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.stat-value {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.slots-table {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.slots-table h4 {
+    margin-bottom: 1rem;
+    color: #1e293b;
+}
+
+.waza-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.waza-table thead {
+    background: #f8fafc;
+}
+
+.waza-table th,
+.waza-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.waza-table th {
+    font-weight: 600;
+    color: #475569;
+}
+
+.waza-table td {
+    color: #1e293b;
+}
+
+.waza-table .text-center {
+    text-align: center;
+}
+
+.percentage {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 999px;
     font-weight: 600;
 }
 
-.waza-scanner-success {
-    background: #d1e7dd;
-    color: #0f5132;
-    padding: 25px;
-    border-radius: 12px;
-    animation: slideUp 0.3s ease-out;
+/* Toast Notifications */
+.waza-toast {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 10000;
+    transition: top 0.3s;
+}
+
+.waza-toast.show {
+    top: 2rem;
+}
+
+.waza-toast.success {
+    border-left: 4px solid #10b981;
+}
+
+.waza-toast.error {
+    border-left: 4px solid #ef4444;
+}
+
+.toast-icon {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.waza-toast.success .toast-icon {
+    color: #10b981;
+}
+
+.waza-toast.error .toast-icon {
+    color: #ef4444;
+}
+
+.toast-message {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+    font-size: 1.125rem;
+}
+
+.error {
+    text-align: center;
+    padding: 3rem;
+    color: #ef4444;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .waza-scanner-tabs {
+        flex-direction: column;
+    }
+    
+    .stats-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .waza-table {
+        font-size: 0.875rem;
+    }
+    
+    .waza-table th,
+    .waza-table td {
+        padding: 0.5rem;
+    }
+}
 }
 
 .waza-scanner-success h3 {

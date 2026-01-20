@@ -459,7 +459,7 @@ class InteractiveCalendarManager {
         $last_day = date('Y-m-t', strtotime("$year-$month-01"));
         
         // Build query
-        $where = "WHERE s.start_datetime >= %s AND s.start_datetime <= %s AND s.status = 'active'";
+        $where = "WHERE s.start_datetime >= %s AND s.start_datetime <= %s AND s.status IN ('active', 'available')";
         $params = [$first_day . ' 00:00:00', $last_day . ' 23:59:59'];
         
         if ($activity_id > 0) {
@@ -475,11 +475,12 @@ class InteractiveCalendarManager {
         $slots = $wpdb->get_results($wpdb->prepare("
             SELECT s.*, 
                    p.post_title as activity_name,
-                   u.display_name as instructor_name,
+                   COALESCE(pi.post_title, u.display_name) as instructor_name,
                    (SELECT COUNT(*) FROM {$wpdb->prefix}waza_bookings 
                     WHERE slot_id = s.id AND booking_status != 'cancelled') as booked_count
             FROM {$wpdb->prefix}waza_slots s
             LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->posts} pi ON s.instructor_id = pi.ID AND pi.post_type = 'waza_instructor'
             LEFT JOIN {$wpdb->users} u ON s.instructor_id = u.ID
             $where
             ORDER BY s.start_datetime ASC
@@ -527,10 +528,16 @@ class InteractiveCalendarManager {
      * Get calendar settings
      */
     private function get_calendar_settings() {
-        $settings_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('settings');
+        // Get customization settings
+        $customization = get_option('waza_customization_options', []);
+        $booking_settings = get_option('waza_booking_settings', []);
         
         return [
-            'primary_color' => get_option('waza_calendar_primary_color', '#007bff'),
+            'primary_color' => $customization['calendar_primary_color'] ?? $booking_settings['appearance_primary_color'] ?? '#007bff',
+            'secondary_color' => $customization['calendar_secondary_color'] ?? $booking_settings['appearance_secondary_color'] ?? '#2c3e50',
+            'accent_color' => $customization['calendar_accent_color'] ?? '#e74c3c',
+            'background_color' => $customization['calendar_background_color'] ?? '#ffffff',
+            'text_color' => $customization['calendar_text_color'] ?? '#333333',
             'start_of_week' => get_option('waza_calendar_start_of_week', 'monday'),
             'time_format' => get_option('waza_calendar_time_format', '12h'),
             'show_instructor' => get_option('waza_calendar_show_instructor', 'yes'),

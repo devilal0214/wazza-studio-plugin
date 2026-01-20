@@ -1,0 +1,1069 @@
+/**
+ * Waza Instructor Dashboard Styles
+ * Mobile-first, dark theme design
+ */
+
+:root {
+    --instructor-primary: #000000;
+    --instructor-secondary: #000000;
+    --instructor-accent: #000000;
+    --instructor-danger: #000000;
+    --instructor-dark: #000000;
+    --instructor-dark-light: #1a1a1a;
+    --instructor-text: #ffffff;
+    --instructor-text-secondary: #cccccc;
+    --instructor-border: #333333;
+    --instructor-bg: #000000;
+    --instructor-card: #1a1a1a;
+    --instructor-hover: #333333;
+}
+
+/* Registration Form Styles */
+.waza-instructor-registration {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.waza-form-container {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.waza-form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.waza-form-header h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 0.5rem;
+}
+
+.waza-form-header p {
+    color: #666666;
+    font-size: 1rem;
+}
+
+.waza-form-section {
+    margin-bottom: 2rem;
+}
+
+.waza-form-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #cccccc;
+}
+
+.waza-form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+    .waza-form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.waza-form-group {
+    margin-bottom: 1rem;
+}
+
+.waza-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.waza-form-group label {
+    display: block;
+    font-weight: 500;
+    color: #000000;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.waza-form-group .required {
+    color: #000000;
+}
+
+.waza-form-group input[type="text"],
+.waza-form-group input[type="email"],
+.waza-form-group input[type="tel"],
+.waza-form-group input[type="number"],
+.waza-form-group input[type="url"],
+.waza-form-group input[type="date"],
+.waza-form-group input[type="time"],
+.waza-form-group select,
+.waza-form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #000000;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: #ffffff;
+    color: #000000;
+    transition: border-color 0.2s;
+}
+
+.waza-form-group input:focus,
+.waza-form-group select:focus,
+.waza-form-group textarea:focus {
+    outline: none;
+    border-color: #000000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.waza-form-group textarea {
+    resize: vertical;
+}
+
+.waza-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.waza-checkbox-label input[type="checkbox"] {
+    margin-top: 0.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    cursor: pointer;
+}
+
+.waza-form-actions {
+    margin-top: 2rem;
+}
+
+.waza-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.waza-btn-primary {
+    background: #000000;
+    color: #ffffff;
+}
+
+.waza-btn-primary:hover {
+    background: #333333;
+}
+
+.waza-btn-secondary {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+.waza-btn-secondary:hover {
+    background: #f0f0f0;
+}
+
+.waza-btn-danger {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+.waza-btn-danger:hover {
+    background: #000000;
+    color: #ffffff;
+}
+
+.waza-btn-lg {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 1.125rem;
+}
+
+.waza-btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.waza-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.button-loader .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.waza-message {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.waza-message.success {
+    background: #f0f0f0;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.waza-message.error {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+.waza-notice {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.waza-notice.info {
+    background: #f0f0f0;
+    color: #000000;
+    border-left: 4px solid #000000;
+}
+
+.waza-notice.warning {
+    background: #ffffff;
+    color: #000000;
+    border-left: 4px solid #666666;
+}
+
+.waza-notice.error {
+    background: #ffffff;
+    color: #000000;
+    border-left: 4px solid #000000;
+}
+
+/* Instructor Dashboard Styles */
+.waza-instructor-dashboard {
+    background: var(--instructor-bg);
+    min-height: 100vh;
+    color: var(--instructor-text);
+    padding-bottom: 5rem;
+}
+
+/* Mobile Header */
+.waza-mobile-header {
+    background: var(--instructor-dark);
+    padding: 1.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--instructor-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.waza-header-content h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    color: var(--instructor-text);
+}
+
+.waza-subtitle {
+    font-size: 0.875rem;
+    color: var(--instructor-text-secondary);
+    margin: 0;
+}
+
+.waza-profile-btn {
+    background: var(--instructor-dark-light);
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Stats Row */
+.waza-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.waza-stat-card {
+    background: var(--instructor-card);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--instructor-border);
+}
+
+.waza-stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.waza-stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--instructor-primary);
+    margin-bottom: 0.25rem;
+}
+
+.waza-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--instructor-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Tab Navigation */
+.waza-tab-navigation {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.waza-tab-navigation::-webkit-scrollbar {
+    display: none;
+}
+
+.waza-tab-btn {
+    background: var(--instructor-card);
+    border: 1px solid var(--instructor-border);
+    color: var(--instructor-text-secondary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 80px;
+}
+
+.waza-tab-btn.active {
+    background: var(--instructor-primary);
+    color: white;
+    border-color: var(--instructor-primary);
+}
+
+.tab-icon {
+    font-size: 1.25rem;
+}
+
+.tab-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Tab Panels */
+.waza-tab-container {
+    padding: 1rem;
+}
+
+.waza-tab-panel {
+    display: none;
+}
+
+.waza-tab-panel.active {
+    display: block;
+}
+
+.waza-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.waza-panel-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.waza-create-workshop-btn {
+    background: var(--instructor-primary);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.waza-create-workshop-btn:hover {
+    background: #4338CA;
+}
+
+/* Filter Tabs */
+.waza-filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.waza-filter-tab {
+    background: var(--instructor-card);
+    border: 1px solid var(--instructor-border);
+    color: var(--instructor-text);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.waza-filter-tab.active {
+    background: var(--instructor-primary);
+    border-color: var(--instructor-primary);
+}
+
+.waza-filter-tab:hover:not(.active) {
+    background: var(--instructor-hover);
+}
+
+/* Workshops Grid */
+.waza-workshops-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .waza-workshops-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .waza-workshops-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.waza-workshop-card {
+    background: var(--instructor-card);
+    border: 1px solid var(--instructor-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.waza-workshop-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.waza-workshop-card.past {
+    opacity: 0.6;
+}
+
+.waza-workshop-card.pending {
+    border-left: 4px solid var(--instructor-accent);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.waza-workshop-card.pending .progress-fill {
+    background: var(--instructor-accent);
+}
+
+.workshop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.workshop-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--instructor-text);
+}
+
+.workshop-status {
+    background: var(--instructor-secondary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.workshop-status.past {
+    background: var(--instructor-text-secondary);
+}
+
+.workshop-details {
+    margin-bottom: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--instructor-text-secondary);
+    font-size: 0.875rem;
+}
+
+.detail-row .icon {
+    font-size: 1rem;
+}
+
+.workshop-progress {
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--instructor-dark-light);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--instructor-primary), var(--instructor-secondary));
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--instructor-text-secondary);
+}
+
+.workshop-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Loading & Empty States */
+.waza-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--instructor-text-secondary);
+}
+
+.waza-loading .spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--instructor-dark-light);
+    border-top-color: var(--instructor-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.waza-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--instructor-text-secondary);
+}
+
+.waza-empty-state p {
+    font-size: 1.125rem;
+}
+
+/* Profile Form */
+.waza-profile-form {
+    max-width: 600px;
+}
+
+.waza-profile-avatar {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    border: 3px solid var(--instructor-border);
+}
+
+.avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.waza-profile-form .waza-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.waza-profile-form label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--instructor-text);
+}
+
+.waza-profile-form input,
+.waza-profile-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--instructor-dark);
+    border: 1px solid var(--instructor-border);
+    border-radius: 6px;
+    color: var(--instructor-text);
+    font-size: 1rem;
+}
+
+.waza-profile-form input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.waza-profile-form small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--instructor-text-secondary);
+}
+
+/* Floating Action Button */
+.waza-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: var(--instructor-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.75rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.waza-fab:hover {
+    background: #4338CA;
+    transform: scale(1.1);
+}
+
+@media (min-width: 1024px) {
+    .waza-fab {
+        display: none;
+    }
+}
+
+/* Modal */
+.waza-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none;
+}
+
+.waza-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.waza-modal-content {
+    position: relative;
+    background: #ffffff;
+    max-width: 500px;
+    margin: 3rem auto;
+    border-radius: 12px;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    border: 2px solid #000000;
+}
+
+.waza-modal-header {
+    padding: 1.5rem;
+    border-bottom: 2px solid #000000;
+    background: #ffffff;
+}
+
+.waza-modal-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.waza-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #000000;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.waza-modal-close:hover {
+    background: #f0f0f0;
+    color: #000000;
+}
+
+.waza-modal-body {
+    padding: 1.5rem;
+    background: #ffffff;
+    color: #000000;
+}
+
+.waza-modal-footer {
+    padding: 1.5rem;
+    border-top: 2px solid #000000;
+    background: #ffffff;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.waza-qr-display {
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.waza-qr-display img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.waza-qr-instructions {
+    text-align: center;
+    color: var(--instructor-text-secondary);
+    font-size: 0.875rem;
+    margin: 1rem 0;
+}
+
+/* Schedule */
+.waza-schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.schedule-item {
+    background: var(--instructor-card);
+    border: 1px solid var(--instructor-border);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.schedule-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 1rem;
+    border-right: 2px solid var(--instructor-primary);
+    min-width: 100px;
+}
+
+.schedule-time .time {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--instructor-text);
+}
+
+.schedule-time .date {
+    font-size: 0.75rem;
+    color: var(--instructor-text-secondary);
+}
+
+.schedule-info h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: var(--instructor-text);
+}
+
+.schedule-info p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--instructor-text-secondary);
+}
+
+/* Students Table */
+.waza-students-table {
+    overflow-x: auto;
+}
+
+.waza-students-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.waza-students-table th {
+    background: var(--instructor-primary);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--instructor-primary);
+}
+
+.waza-students-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--instructor-border);
+    color: var(--instructor-text);
+    font-size: 0.875rem;
+    background: var(--instructor-card);
+}
+
+.waza-students-table td strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.waza-students-table tr:hover td {
+    background: var(--instructor-hover);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: #f0f0f0;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.status-badge.success {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+.status-badge.warning {
+    background: #e0e0e0;
+    color: #000000;
+    border: 2px solid #666666;
+}
+
+.status-badge.error {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+/* Workshop Details in Modal */
+.waza-modal-header .workshop-details {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--instructor-dark-light);
+    border-radius: 8px;
+    border-left: 3px solid var(--instructor-primary);
+}
+
+.waza-modal-header .workshop-details p {
+    margin: 0.25rem 0;
+    color: #e5e7eb;
+    font-size: 0.875rem;
+}
+
+.waza-modal-header .workshop-details p strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Students Modal Specific */
+.waza-students-modal .waza-modal-content {
+    max-width: 900px;
+}
+
+.waza-students-modal .waza-students-table th {
+    white-space: nowrap;
+}
+
+.waza-students-modal .waza-students-table td {
+    vertical-align: middle;
+}
+
+/* Search Box */
+.waza-search-box input {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.5rem 1rem;
+    background: var(--instructor-dark);
+    border: 1px solid var(--instructor-border);
+    border-radius: 6px;
+    color: var(--instructor-text);
+    font-size: 0.875rem;
+}
+
+.waza-search-box input:focus {
+    outline: none;
+    border-color: var(--instructor-primary);
+}
+
+/* Create Workshop Modal */
+.waza-create-workshop-modal {
+    max-width: 600px;
+}
+
+.waza-create-workshop-modal .waza-modal-content {
+    background: #ffffff;
+}
+
+.waza-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.waza-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.waza-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #000000;
+    font-size: 0.875rem;
+}
+
+.waza-form-group .required {
+    color: #000000;
+}
+
+.waza-form-group input,
+.waza-form-group select,
+.waza-form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 6px;
+    color: #000000;
+    font-size: 0.875rem;
+    font-family: inherit;
+}
+
+.waza-form-group input::placeholder,
+.waza-form-group textarea::placeholder {
+    color: #666666;
+}
+
+.waza-form-group input:focus,
+.waza-form-group select:focus,
+.waza-form-group textarea:focus {
+    outline: none;
+    border-color: #000000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.waza-form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.waza-form-message {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.waza-form-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid #22c55e;
+    color: #22c55e;
+}
+
+.waza-form-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.waza-form-message p {
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+    .waza-modal-content {
+        margin: 1rem;
+        max-height: calc(100vh - 2rem);
+    }
+    
+    .waza-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .waza-create-workshop-btn {
+        width: 100%;
+    }
+    
+    .waza-form-row {
+        grid-template-columns: 1fr;
+    }
+}

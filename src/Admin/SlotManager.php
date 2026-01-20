@@ -123,43 +123,131 @@ class SlotManager {
     }
     
     /**
-     * Render slots list with pagination
+     * Render slots list with pagination and filters
      */
     private function render_slots_list() {
         global $wpdb;
+        
+        // Get filter values
+        $filter_activity = isset($_GET['filter_activity']) ? intval($_GET['filter_activity']) : 0;
+        $filter_date_from = isset($_GET['filter_date_from']) ? sanitize_text_field($_GET['filter_date_from']) : '';
+        $filter_date_to = isset($_GET['filter_date_to']) ? sanitize_text_field($_GET['filter_date_to']) : '';
+        $filter_status = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
         
         // Pagination setup
         $per_page = 20;
         $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
         $offset = ($current_page - 1) * $per_page;
         
-        // Get total count
-        $total_slots = $wpdb->get_var("
-            SELECT COUNT(*)
-            FROM {$wpdb->prefix}waza_slots
-        ");
+        // Build WHERE clause for filters
+        $where_clauses = [];
+        $query_params = [];
+        
+        if ($filter_activity) {
+            $where_clauses[] = "s.activity_id = %d";
+            $query_params[] = $filter_activity;
+        }
+        
+        if ($filter_date_from) {
+            $where_clauses[] = "DATE(s.start_datetime) >= %s";
+            $query_params[] = $filter_date_from;
+        }
+        
+        if ($filter_date_to) {
+            $where_clauses[] = "DATE(s.start_datetime) <= %s";
+            $query_params[] = $filter_date_to;
+        }
+        
+        if ($filter_status) {
+            $where_clauses[] = "s.status = %s";
+            $query_params[] = $filter_status;
+        }
+        
+        $where_sql = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
+        
+        // Get total count with filters
+        $count_query = "SELECT COUNT(*) FROM {$wpdb->prefix}waza_slots s $where_sql";
+        if (!empty($query_params)) {
+            $total_slots = $wpdb->get_var($wpdb->prepare($count_query, ...$query_params));
+        } else {
+            $total_slots = $wpdb->get_var($count_query);
+        }
         
         $total_pages = ceil($total_slots / $per_page);
         
-        // Get slots with activity details - LATEST FIRST (DESC)
-        $slots = $wpdb->get_results($wpdb->prepare("
+        // Get slots with activity details and filters - LATEST FIRST (DESC)
+        $slots_query = "
             SELECT s.*, p.post_title as activity_title,
+                   pm.meta_value as instructor_id,
+                   pi.post_title as instructor_name,
                    COUNT(b.id) as bookings_count,
                    SUM(CASE WHEN b.booking_status = 'confirmed' THEN b.attendees_count ELSE 0 END) as confirmed_bookings
             FROM {$wpdb->prefix}waza_slots s
             LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_waza_instructor'
+            LEFT JOIN {$wpdb->posts} pi ON pm.meta_value = pi.ID
             LEFT JOIN {$wpdb->prefix}waza_bookings b ON s.id = b.slot_id
+            $where_sql
             GROUP BY s.id
             ORDER BY s.start_datetime DESC
             LIMIT %d OFFSET %d
-        ", $per_page, $offset));
+        ";
+        
+        $query_params[] = $per_page;
+        $query_params[] = $offset;
+        
+        $slots = $wpdb->get_results($wpdb->prepare($slots_query, ...$query_params));
+        
+        // Get all activities for filter dropdown
+        $activities = $wpdb->get_results("
+            SELECT ID, post_title 
+            FROM {$wpdb->posts} 
+            WHERE post_type = 'waza_activity' AND post_status = 'publish' 
+            ORDER BY post_title ASC
+        ");
         
         ?>
         <div class="waza-slots-list">
+            <!-- Filters -->
             <div class="tablenav top">
                 <div class="alignleft actions">
+                    <form method="get" action="" style="display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="hidden" name="page" value="waza-slots">
+                        <input type="hidden" name="tab" value="list">
+                        
+                        <select name="filter_activity" style="min-width: 200px;">
+                            <option value=""><?php _e('All Activities', 'waza-booking'); ?></option>
+                            <?php foreach ($activities as $activity): ?>
+                                <option value="<?php echo esc_attr($activity->ID); ?>" <?php selected($filter_activity, $activity->ID); ?>>
+                                    <?php echo esc_html($activity->post_title); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        
+                        <input type="date" name="filter_date_from" value="<?php echo esc_attr($filter_date_from); ?>" 
+                               placeholder="<?php _e('From Date', 'waza-booking'); ?>">
+                        
+                        <input type="date" name="filter_date_to" value="<?php echo esc_attr($filter_date_to); ?>" 
+                               placeholder="<?php _e('To Date', 'waza-booking'); ?>">
+                        
+                        <select name="filter_status">
+                            <option value=""><?php _e('All Statuses', 'waza-booking'); ?></option>
+                            <option value="active" <?php selected($filter_status, 'active'); ?>><?php _e('Active', 'waza-booking'); ?></option>
+                            <option value="inactive" <?php selected($filter_status, 'inactive'); ?>><?php _e('Inactive', 'waza-booking'); ?></option>
+                            <option value="full" <?php selected($filter_status, 'full'); ?>><?php _e('Full', 'waza-booking'); ?></option>
+                        </select>
+                        
+                        <button type="submit" class="button"><?php _e('Filter', 'waza-booking'); ?></button>
+                        
+                        <?php if ($filter_activity || $filter_date_from || $filter_date_to || $filter_status): ?>
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=waza-slots&tab=list')); ?>" class="button">
+                                <?php _e('Clear Filters', 'waza-booking'); ?>
+                            </a>
+                        <?php endif; ?>
+                    </form>
+                    
                     <a href="<?php echo esc_url(admin_url('admin.php?page=waza-slots&tab=add')); ?>" 
-                       class="button button-primary">
+                       class="button button-primary" style="margin-left: 10px;">
                         <?php esc_html_e('Add New Slot', 'waza-booking'); ?>
                     </a>
                 </div>
@@ -185,6 +273,7 @@ class SlotManager {
                 <thead>
                     <tr>
                         <th><?php esc_html_e('Activity', 'waza-booking'); ?></th>
+                        <th><?php esc_html_e('Instructor', 'waza-booking'); ?></th>
                         <th><?php esc_html_e('Date & Time', 'waza-booking'); ?></th>
                         <th><?php esc_html_e('Capacity', 'waza-booking'); ?></th>
                         <th><?php esc_html_e('Bookings', 'waza-booking'); ?></th>
@@ -195,7 +284,7 @@ class SlotManager {
                 <tbody>
                     <?php if (empty($slots)): ?>
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
+                            <td colspan="7" style="text-align: center; padding: 40px;">
                                 <p><?php esc_html_e('No time slots found.', 'waza-booking'); ?></p>
                                 <p>
                                     <a href="<?php echo esc_url(admin_url('admin.php?page=waza-slots&tab=add')); ?>" 
@@ -210,6 +299,9 @@ class SlotManager {
                             <tr>
                                 <td>
                                     <strong><?php echo esc_html($slot->activity_title ?: __('Unknown Activity', 'waza-booking')); ?></strong>
+                                </td>
+                                <td>
+                                    <?php echo esc_html($slot->instructor_name ?: __('Not Assigned', 'waza-booking')); ?>
                                 </td>
                                 <td>
                                     <?php echo esc_html(wp_date('M j, Y @ g:i A', strtotime($slot->start_datetime))); ?>
@@ -273,7 +365,7 @@ class SlotManager {
             font-weight: 600;
             text-transform: uppercase;
         }
-        .status-available { background: #d1e7dd; color: #0f5132; }
+        .status-active { background: #d1e7dd; color: #0f5132; }
         .status-full { background: #f8d7da; color: #721c24; }
         .status-cancelled { background: #f1f3f4; color: #5f6368; }
         </style>
@@ -664,7 +756,7 @@ class SlotManager {
                 'price' => $price,
                 'location' => $location,
                 'notes' => $notes,
-                'status' => 'available'
+                'status' => 'active'
             ],
             [
                 '%d',
@@ -940,7 +1032,7 @@ class SlotManager {
                             'end_datetime' => $end_datetime,
                             'capacity' => $capacity,
                             'price' => $price,
-                            'status' => 'available'
+                            'status' => 'active'
                         ],
                         ['%d', '%d', '%s', '%s', '%d', '%f', '%s']
                     );

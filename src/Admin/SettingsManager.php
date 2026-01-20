@@ -1058,17 +1058,7 @@ class SettingsManager {
             'waza-settings'
         );
         
-        add_settings_field(
-            'waza_calendar_primary_color',
-            __('Primary Color', 'waza-booking'),
-            [$this, 'color_field_callback'],
-            'waza-settings',
-            'waza_calendar_section',
-            [
-                'field_id' => 'waza_calendar_primary_color',
-                'description' => __('Primary color for calendar UI elements (deprecated - use Appearance settings)', 'waza-booking')
-            ]
-        );
+        // Note: Calendar colors are now managed in Customization settings
         
         add_settings_field(
             'waza_calendar_start_of_week',
@@ -1482,6 +1472,16 @@ class SettingsManager {
         <h4><?php esc_html_e('Razorpay Settings', 'waza-booking'); ?></h4>
         <table class="form-table">
             <tr>
+                <th scope="row"><label for="razorpay_enabled"><?php esc_html_e('Enable Razorpay', 'waza-booking'); ?></label></th>
+                <td>
+                    <label>
+                        <input type="checkbox" id="razorpay_enabled" name="<?php echo self::OPTION_NAME; ?>[razorpay_enabled]" 
+                               value="1" <?php checked($settings['razorpay_enabled'] ?? 0, 1); ?> />
+                        <?php esc_html_e('Enable Razorpay payment gateway', 'waza-booking'); ?>
+                    </label>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row"><label for="razorpay_key_id"><?php esc_html_e('Razorpay Key ID', 'waza-booking'); ?></label></th>
                 <td>
                     <input type="text" id="razorpay_key_id" name="<?php echo self::OPTION_NAME; ?>[razorpay_key_id]" 
@@ -1499,6 +1499,16 @@ class SettingsManager {
         
         <h4><?php esc_html_e('Stripe Settings', 'waza-booking'); ?></h4>
         <table class="form-table">
+            <tr>
+                <th scope="row"><label for="stripe_enabled"><?php esc_html_e('Enable Stripe', 'waza-booking'); ?></label></th>
+                <td>
+                    <label>
+                        <input type="checkbox" id="stripe_enabled" name="<?php echo self::OPTION_NAME; ?>[stripe_enabled]" 
+                               value="1" <?php checked($settings['stripe_enabled'] ?? 0, 1); ?> />
+                        <?php esc_html_e('Enable Stripe payment gateway', 'waza-booking'); ?>
+                    </label>
+                </td>
+            </tr>
             <tr>
                 <th scope="row"><label for="stripe_publishable_key"><?php esc_html_e('Stripe Publishable Key', 'waza-booking'); ?></label></th>
                 <td>
@@ -1890,16 +1900,12 @@ class SettingsManager {
     
     private function render_calendar_tab($settings) {
         ?>
-        <h3><?php esc_html_e('Calendar Appearance Settings', 'waza-booking'); ?></h3>
+        <h3><?php esc_html_e('Calendar Display Settings', 'waza-booking'); ?></h3>
+        <p class="description" style="margin-bottom: 20px;">
+            <?php esc_html_e('Calendar colors are managed in ', 'waza-booking'); ?>
+            <a href="<?php echo admin_url('admin.php?page=waza-customization'); ?>"><?php esc_html_e('Customization Settings', 'waza-booking'); ?></a>
+        </p>
         <table class="form-table">
-            <tr>
-                <th scope="row"><?php esc_html_e('Primary Color', 'waza-booking'); ?></th>
-                <td>
-                    <input type="color" name="<?php echo self::OPTION_NAME; ?>[waza_calendar_primary_color]" 
-                           value="<?php echo esc_attr($settings['waza_calendar_primary_color'] ?? '#2271b1'); ?>" />
-                    <p class="description"><?php esc_html_e('Primary color for calendar UI elements', 'waza-booking'); ?></p>
-                </td>
-            </tr>
             <tr>
                 <th scope="row"><?php esc_html_e('Start of Week', 'waza-booking'); ?></th>
                 <td>
@@ -2242,7 +2248,7 @@ class SettingsManager {
             'phonepe_merchant_id', 'phonepe_salt_key', 'phonepe_salt_index', // PhonePe fields
             'ical_event_name', 'ical_location', 'ical_event_title_format',
             'sender_name', // Email sender name
-            'waza_calendar_primary_color', 'waza_calendar_start_of_week',
+            'waza_calendar_start_of_week',
             'waza_calendar_time_format', 'waza_calendar_show_instructor',
             'waza_calendar_show_price',
             // Appearance customization fields

@@ -1,0 +1,291 @@
+
+    /**
+     * Pending Workshops Page
+     */
+    public function pending_workshops_page() {
+        global $wpdb;
+        
+        $pending_workshops = $wpdb->get_results("
+            SELECT 
+                s.*,
+                p.post_title as activity_title,
+                p.post_content as activity_description,
+                pm.meta_value as instructor_id,
+                pi.post_title as instructor_name
+            FROM {$wpdb->prefix}waza_slots s
+            INNER JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_waza_instructor'
+            LEFT JOIN {$wpdb->posts} pi ON pm.meta_value = pi.ID
+            WHERE s.status = 'pending_approval'
+            ORDER BY s.created_at DESC
+        ");
+        
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e('Pending Workshops', 'waza-booking'); ?></h1>
+            
+            <?php if (empty($pending_workshops)): ?>
+                <div class="notice notice-info">
+                    <p><?php esc_html_e('No pending workshops at the moment.', 'waza-booking'); ?></p>
+                </div>
+            <?php else: ?>
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Workshop', 'waza-booking'); ?></th>
+                            <th><?php esc_html_e('Instructor', 'waza-booking'); ?></th>
+                            <th><?php esc_html_e('Date & Time', 'waza-booking'); ?></th>
+                            <th><?php esc_html_e('Capacity', 'waza-booking'); ?></th>
+                            <th><?php esc_html_e('Price', 'waza-booking'); ?></th>
+                            <th><?php esc_html_e('Submitted', 'waza-booking'); ?></th>
+                            <th><?php esc_html_e('Actions', 'waza-booking'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($pending_workshops as $workshop): ?>
+                            <tr id="workshop-<?php echo esc_attr($workshop->id); ?>">
+                                <td>
+                                    <strong><?php echo esc_html($workshop->activity_title); ?></strong>
+                                    <?php if ($workshop->activity_description): ?>
+                                        <br><small><?php echo esc_html(wp_trim_words($workshop->activity_description, 15)); ?></small>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html($workshop->instructor_name ?: 'Unknown'); ?></td>
+                                <td>
+                                    <?php echo date('M j, Y', strtotime($workshop->start_datetime)); ?><br>
+                                    <small><?php echo date('g:i A', strtotime($workshop->start_datetime)) . ' - ' . date('g:i A', strtotime($workshop->end_datetime)); ?></small>
+                                </td>
+                                <td><?php echo esc_html($workshop->capacity); ?></td>
+                                <td>$<?php echo number_format($workshop->price, 2); ?></td>
+                                <td><?php echo human_time_diff(strtotime($workshop->created_at), current_time('timestamp')) . ' ago'; ?></td>
+                                <td>
+                                    <button class="button button-primary approve-workshop" data-slot-id="<?php echo esc_attr($workshop->id); ?>" data-nonce="<?php echo wp_create_nonce('waza_approve_workshop_' . $workshop->id); ?>">
+                                        <?php esc_html_e('Approve', 'waza-booking'); ?>
+                                    </button>
+                                    <button class="button button-secondary reject-workshop" data-slot-id="<?php echo esc_attr($workshop->id); ?>" data-nonce="<?php echo wp_create_nonce('waza_reject_workshop_' . $workshop->id); ?>">
+                                        <?php esc_html_e('Reject', 'waza-booking'); ?>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            $('.approve-workshop').on('click', function() {
+                const slotId = $(this).data('slot-id');
+                const nonce = $(this).data('nonce');
+                const row = $('#workshop-' + slotId);
+                
+                if (!confirm('<?php esc_html_e('Are you sure you want to approve this workshop?', 'waza-booking'); ?>')) {
+                    return;
+                }
+                
+                $(this).prop('disabled', true).text('<?php esc_html_e('Approving...', 'waza-booking'); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'waza_approve_workshop',
+                        slot_id: slotId,
+                        nonce: nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            row.fadeOut(400, function() {
+                                $(this).remove();
+                                if ($('tbody tr').length === 0) {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            alert(response.data.message || '<?php esc_html_e('Failed to approve workshop', 'waza-booking'); ?>');
+                            location.reload();
+                        }
+                    }
+                });
+            });
+            
+            $('.reject-workshop').on('click', function() {
+                const slotId = $(this).data('slot-id');
+                const nonce = $(this).data('nonce');
+                const row = $('#workshop-' + slotId);
+                
+                const reason = prompt('<?php esc_html_e('Reason for rejection (optional):', 'waza-booking'); ?>');
+                if (reason === null) return;
+                
+                $(this).prop('disabled', true).text('<?php esc_html_e('Rejecting...', 'waza-booking'); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'waza_reject_workshop',
+                        slot_id: slotId,
+                        nonce: nonce,
+                        reason: reason
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            row.fadeOut(400, function() {
+                                $(this).remove();
+                                if ($('tbody tr').length === 0) {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            alert(response.data.message || '<?php esc_html_e('Failed to reject workshop', 'waza-booking'); ?>');
+                            location.reload();
+                        }
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+    }
+    
+    /**
+     * AJAX: Approve Workshop
+     */
+    public function ajax_approve_workshop() {
+        $slot_id = intval($_POST['slot_id'] ?? 0);
+        $nonce = $_POST['nonce'] ?? '';
+        
+        if (!wp_verify_nonce($nonce, 'waza_approve_workshop_' . $slot_id)) {
+            wp_send_json_error(['message' => __('Invalid security token', 'waza-booking')]);
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Unauthorized', 'waza-booking')]);
+        }
+        
+        global $wpdb;
+        
+        // Update slot status
+        $updated = $wpdb->update(
+            $wpdb->prefix . 'waza_slots',
+            ['status' => 'active', 'updated_at' => current_time('mysql')],
+            ['id' => $slot_id],
+            ['%s', '%s'],
+            ['%d']
+        );
+        
+        if (!$updated) {
+            wp_send_json_error(['message' => __('Failed to update workshop status', 'waza-booking')]);
+        }
+        
+        // Get workshop and instructor details
+        $slot = $wpdb->get_row($wpdb->prepare("
+            SELECT s.*, p.post_title as activity_title, pm.meta_value as instructor_id
+            FROM {$wpdb->prefix}waza_slots s
+            INNER JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_waza_instructor'
+            WHERE s.id = %d
+        ", $slot_id));
+        
+        if ($slot && $slot->instructor_id) {
+            $this->notify_instructor_approval($slot, 'approved');
+        }
+        
+        wp_send_json_success(['message' => __('Workshop approved successfully!', 'waza-booking')]);
+    }
+    
+    /**
+     * AJAX: Reject Workshop
+     */
+    public function ajax_reject_workshop() {
+        $slot_id = intval($_POST['slot_id'] ?? 0);
+        $nonce = $_POST['nonce'] ?? '';
+        $reason = sanitize_textarea_field($_POST['reason'] ?? '');
+        
+        if (!wp_verify_nonce($nonce, 'waza_reject_workshop_' . $slot_id)) {
+            wp_send_json_error(['message' => __('Invalid security token', 'waza-booking')]);
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Unauthorized', 'waza-booking')]);
+        }
+        
+        global $wpdb;
+        
+        // Get workshop details before deletion
+        $slot = $wpdb->get_row($wpdb->prepare("
+            SELECT s.*, p.post_title as activity_title, pm.meta_value as instructor_id
+            FROM {$wpdb->prefix}waza_slots s
+            INNER JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_waza_instructor'
+            WHERE s.id = %d
+        ", $slot_id));
+        
+        // Delete the slot
+        $deleted = $wpdb->delete(
+            $wpdb->prefix . 'waza_slots',
+            ['id' => $slot_id],
+            ['%d']
+        );
+        
+        if (!$deleted) {
+            wp_send_json_error(['message' => __('Failed to delete workshop', 'waza-booking')]);
+        }
+        
+        // Notify instructor
+        if ($slot && $slot->instructor_id) {
+            $this->notify_instructor_approval($slot, 'rejected', $reason);
+        }
+        
+        wp_send_json_success(['message' => __('Workshop rejected', 'waza-booking')]);
+    }
+    
+    /**
+     * Notify instructor about approval/rejection
+     */
+    private function notify_instructor_approval($slot, $status, $reason = '') {
+        // Get instructor's user
+        $instructor = get_post($slot->instructor_id);
+        $user_id = get_post_meta($slot->instructor_id, '_waza_user_id', true);
+        
+        if (!$user_id) {
+            return;
+        }
+        
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return;
+        }
+        
+        if ($status === 'approved') {
+            $subject = sprintf(__('[Waza Booking] Workshop Approved - %s', 'waza-booking'), $slot->activity_title);
+            $message = sprintf(
+                __('Great news! Your workshop "%s" has been approved by the admin.', 'waza-booking'),
+                $slot->activity_title
+            ) . "\n\n";
+            
+            $message .= __('Workshop Details:', 'waza-booking') . "\n";
+            $message .= sprintf(__('Date & Time: %s', 'waza-booking'), date('M j, Y g:i A', strtotime($slot->start_datetime))) . "\n";
+            $message .= sprintf(__('Capacity: %d students', 'waza-booking'), $slot->capacity) . "\n";
+            $message .= sprintf(__('Price: $%s', 'waza-booking'), $slot->price) . "\n\n";
+            
+            $message .= __('Your workshop is now available for booking!', 'waza-booking') . "\n";
+            $message .= __('View it in your instructor dashboard.', 'waza-booking');
+            
+        } else {
+            $subject = sprintf(__('[Waza Booking] Workshop Rejected - %s', 'waza-booking'), $slot->activity_title);
+            $message = sprintf(
+                __('Your workshop "%s" was not approved.', 'waza-booking'),
+                $slot->activity_title
+            ) . "\n\n";
+            
+            if ($reason) {
+                $message .= __('Reason:', 'waza-booking') . " $reason\n\n";
+            }
+            
+            $message .= __('Please contact the admin if you have questions.', 'waza-booking');
+        }
+        
+        wp_mail($user->user_email, $subject, $message);
+    }

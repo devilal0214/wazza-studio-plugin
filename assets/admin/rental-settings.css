@@ -1,0 +1,232 @@
+/* Rental Settings Styles */
+
+.waza-rental-settings-wrap {
+    max-width: 1200px;
+}
+
+.waza-rental-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.waza-tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    color: #555;
+}
+
+.waza-tab-btn:hover {
+    color: #0073aa;
+}
+
+.waza-tab-btn.active {
+    color: #0073aa;
+    border-bottom-color: #0073aa;
+}
+
+.waza-tab-content {
+    display: none;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-top: none;
+}
+
+.waza-tab-content.active {
+    display: block;
+}
+
+/* Rental Type Items */
+.rental-type-item,
+.duration-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.rental-type-item:hover,
+.duration-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.rental-type-header,
+.duration-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.rental-type-header h3,
+.duration-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+}
+
+.type-icon {
+    font-size: 24px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: background-color 0.3s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+    background-color: #0073aa;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider::before {
+    transform: translateX(26px);
+}
+
+/* Pricing Matrix */
+.pricing-matrix {
+    overflow-x: auto;
+}
+
+.pricing-matrix table {
+    margin-top: 20px;
+}
+
+.pricing-matrix th {
+    background: #0073aa;
+    color: white;
+    font-weight: 600;
+    padding: 12px;
+}
+
+.pricing-matrix td {
+    padding: 10px;
+}
+
+.pricing-matrix input[type="number"] {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.pricing-matrix input[type="number"]:focus {
+    border-color: #0073aa;
+    outline: none;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+/* Form Elements */
+.rental-type-item .form-table th,
+.duration-item .form-table th {
+    width: 200px;
+    font-weight: 600;
+    padding: 15px 10px;
+}
+
+.rental-type-item .form-table td,
+.duration-item .form-table td {
+    padding: 15px 10px;
+}
+
+/* Delete Button */
+.delete-rental-type,
+.delete-duration {
+    color: #d63638;
+    border-color: #d63638;
+    margin-top: 15px;
+}
+
+.delete-rental-type:hover,
+.delete-duration:hover {
+    background: #d63638;
+    color: white;
+    border-color: #d63638;
+}
+
+/* Add New Button */
+#add-rental-type,
+#add-duration {
+    background: #0073aa;
+    color: white;
+    border-color: #0073aa;
+    padding: 10px 20px;
+    font-size: 14px;
+}
+
+#add-rental-type:hover,
+#add-duration:hover {
+    background: #005a87;
+    border-color: #005a87;
+    color: white;
+}
+
+/* Success Message */
+.waza-rental-settings-wrap .updated {
+    margin-top: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rental-type-header,
+    .duration-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .pricing-matrix table {
+        font-size: 12px;
+    }
+    
+    .pricing-matrix input[type="number"] {
+        width: 80px;
+    }
+    
+    .waza-tab-btn {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+}

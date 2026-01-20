@@ -1,0 +1,370 @@
+/* Modern Announcements UI */
+
+.waza-announcements-page {
+    max-width: 1400px;
+}
+
+.waza-announcements-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.waza-announcements-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.waza-stat-box {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.waza-stat-box.success {
+    border-left-color: #10b981;
+}
+
+.waza-stat-box.warning {
+    border-left-color: #f59e0b;
+}
+
+.waza-stat-box.danger {
+    border-left-color: #ef4444;
+}
+
+.waza-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.waza-stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.waza-announcements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.waza-announcement-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    transition: all 0.3s;
+    border-left: 4px solid transparent;
+}
+
+.waza-announcement-card:hover {
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.waza-announcement-card.type-general {
+    border-left-color: #6366f1;
+}
+
+.waza-announcement-card.type-event {
+    border-left-color: #8b5cf6;
+}
+
+.waza-announcement-card.type-maintenance {
+    border-left-color: #f59e0b;
+}
+
+.waza-announcement-card.type-urgent {
+    border-left-color: #ef4444;
+}
+
+.waza-announcement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.waza-announcement-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.waza-announcement-type-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-badge-general {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.type-badge-event {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.type-badge-maintenance {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.type-badge-urgent {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.waza-announcement-message {
+    color: #4b5563;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+}
+
+.waza-announcement-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.waza-announcement-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.waza-announcement-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.waza-status-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background: white;
+    transition: all 0.2s;
+}
+
+.waza-status-toggle:hover {
+    border-color: #9ca3af;
+}
+
+.waza-status-toggle.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.waza-status-toggle.inactive {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+/* Modal Styles */
+.waza-announcement-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.waza-announcement-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.waza-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.waza-modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.waza-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.waza-modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.waza-modal-body {
+    padding: 1.5rem;
+}
+
+.waza-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.waza-form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.waza-form-label .required {
+    color: #ef4444;
+}
+
+.waza-form-input,
+.waza-form-textarea,
+.waza-form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.waza-form-input:focus,
+.waza-form-textarea:focus,
+.waza-form-select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.waza-form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.waza-form-help {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.waza-modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.waza-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.waza-btn-primary {
+    background: #6366f1;
+    color: white;
+}
+
+.waza-btn-primary:hover {
+    background: #4f46e5;
+}
+
+.waza-btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.waza-btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.waza-btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.waza-btn-danger:hover {
+    background: #dc2626;
+}
+
+/* Empty State */
+.waza-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 8px;
+}
+
+.waza-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.waza-empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.waza-empty-text {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}

@@ -97,6 +97,109 @@
     object-fit: cover;
 }
 
+/* Alert Messages */
+.waza-alert {
+    padding: 1rem 1.25rem;
+    border-radius: var(--waza-radius);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.waza-alert-success {
+    background-color: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #10B981;
+}
+
+.waza-alert-success::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #10B981;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.waza-alert-error {
+    background-color: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #EF4444;
+}
+
+.waza-alert-error::before {
+    content: '✕';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #EF4444;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.waza-alert-warning {
+    background-color: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #F59E0B;
+}
+
+.waza-alert-warning::before {
+    content: '⚠';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #F59E0B;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.waza-alert-info {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #3B82F6;
+}
+
+.waza-alert-info::before {
+    content: 'ℹ';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #3B82F6;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
 .waza-activity-content {
     padding: 1.5rem;
 }
@@ -259,16 +362,30 @@
 
 .waza-form-error {
     display: block;
-    color: var(--waza-danger);
+    color: #DC2626;
     font-size: 0.75rem;
     margin-top: 0.25rem;
+    line-height: 1.3;
+    font-weight: 500;
+    width: 100%;
+    word-wrap: break-word;
 }
 
 input.error,
 textarea.error,
 select.error {
-    border-color: var(--waza-danger);
+    border-color: #DC2626 !important;
     background-color: #FEF2F2;
+}
+
+.waza-form-group.has-error {
+    margin-bottom: 1.25rem;
+}
+
+.waza-form-group.has-error input,
+.waza-form-group.has-error select,
+.waza-form-group.has-error textarea {
+    border-color: #DC2626;
 }
 
 /* Password Options Styling */
@@ -330,8 +447,48 @@ select.error {
 }
 
 .waza-time-slot.unavailable {
-    opacity: 0.5;
+    opacity: 0.6;
     background: #f9fafb;
+    position: relative;
+}
+
+.waza-time-slot.unavailable::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    border-radius: var(--waza-radius);
+}
+
+.waza-time-slot.waza-past-slot {
+    opacity: 0.6;
+}
+
+/* Disabled Button */
+.waza-btn-disabled {
+    background: #9CA3AF !important;
+    color: #ffffff !important;
+    cursor: not-allowed !important;
+    opacity: 0.7;
+    border-color: #9CA3AF !important;
+}
+
+.waza-btn-disabled:hover {
+    background: #9CA3AF !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Badge Styles */
+.waza-badge-expired {
+    background: #FEE2E2 !important;
+    color: #991B1B !important;
+    border: 1px solid #FCA5A5 !important;
+    font-weight: 600;
 }
 
 /* Activity Name */
@@ -460,7 +617,7 @@ select.error {
     /* 16px */
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%;
+    width: calc(100% - 2rem);
     max-width: 600px;
     max-height: calc(100vh - 2rem);
     /* Viewport minus padding */
@@ -471,6 +628,7 @@ select.error {
     opacity: 0;
     animation: wazaSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     animation-delay: 0.1s;
+    margin: 0 1rem;
 }
 
 @keyframes wazaSlideUp {
@@ -573,6 +731,16 @@ select.error {
 
 .waza-form-group {
     margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.waza-form-group > * {
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .waza-form-group label {
@@ -618,25 +786,29 @@ select.error {
 }
 
 .waza-btn-primary {
-    background: var(--waza-primary);
+    background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%);
     color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
 }
 
 .waza-btn-primary:hover {
-    background: var(--waza-primary-hover);
+    background: linear-gradient(135deg, #6D28D9 0%, #4F46E5 100%);
     transform: translateY(-1px);
-    box-shadow: var(--waza-shadow);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
 }
 
 .waza-btn-secondary {
     background: white;
-    border: 1px solid var(--waza-border);
-    color: var(--waza-text-main);
+    border: 2px solid #E5E7EB;
+    color: #4B5563;
+    font-weight: 600;
 }
 
 .waza-btn-secondary:hover {
-    background: var(--waza-bg);
+    background: #F9FAFB;
     border-color: #D1D5DB;
+    transform: translateY(-1px);
 }
 
 .waza-btn-block {
@@ -888,28 +1060,60 @@ select.error {
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: nowrap !important;
+    align-items: flex-start;
 }
 
 .waza-form-col-full {
-    flex: 1;
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .waza-form-col-half {
-    flex: 1;
+    flex: 1 1 calc(50% - 0.5rem);
     min-width: 0;
+    max-width: calc(50% - 0.5rem);
+}
+
+@media (min-width: 641px) {
+    .waza-form-row {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .waza-form-col-half {
+        flex: 1 1 calc(50% - 0.5rem) !important;
+        max-width: calc(50% - 0.5rem) !important;
+        min-width: 0 !important;
+    }
 }
 
 /* Phone Input with Country Code */
+.waza-phone-wrapper {
+    width: 100%;
+    display: block;
+    position: relative;
+}
+
 .waza-phone-input {
     display: flex !important;
     gap: 0.5rem;
-    align-items: center;
+    align-items: stretch;
+    width: 100%;
+    flex-wrap: nowrap !important;
+}
+
+.waza-phone-input.has-error {
+    flex-wrap: nowrap;
 }
 
 .waza-country-select {
-    width: 100px;
-    flex-shrink: 0;
-    padding: 0.75rem 0.5rem;
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    flex-shrink: 0 !important;
+    padding: 0.75rem 0.3rem;
     border: 1px solid var(--waza-border);
     border-radius: var(--waza-radius);
     background: var(--waza-surface);
@@ -919,9 +1123,44 @@ select.error {
 
 .waza-phone-input input[type="tel"] {
     flex: 1 !important;
-    min-width: 0;
+    min-width: 0 !important;
     display: block !important;
     width: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.waza-form-col-half .waza-phone-wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+.waza-form-col-half .waza-phone-input {
+    width: 100%;
+    max-width: 100%;
+}
+
+.waza-form-col-half .waza-phone-input input[type="tel"] {
+    max-width: none !important;
+}
+
+/* Error message for phone field - ensure it appears below the wrapper */
+.waza-phone-wrapper + .waza-form-error,
+.waza-phone-wrapper ~ .waza-form-error,
+.waza-form-group .waza-phone-wrapper .waza-form-error {
+    display: block !important;
+    width: 100% !important;
+    clear: both !important;
+    position: static !important;
+    margin-top: 0.25rem !important;
+    box-sizing: border-box !important;
+}
+
+.waza-form-col-half .waza-form-error {
+    width: 100%;
+    clear: both;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Terms Checkbox */
@@ -1038,7 +1277,7 @@ select.error {
 /* Form Actions */
 .waza-form-actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--waza-border);
@@ -1046,10 +1285,18 @@ select.error {
 
 .waza-form-actions button {
     flex: 1;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
 }
 
 .waza-form-actions .waza-btn-secondary {
-    flex: 0.5;
+    flex: 0.8;
+}
+
+.waza-form-actions .waza-btn-primary {
+    flex: 1.2;
 }
 
 /* Field Help Text */
@@ -1136,11 +1383,119 @@ select.error {
     }
     
     .waza-form-row {
-        flex-direction: column;
+        flex-direction: column !important;
         gap: 0;
+        flex-wrap: wrap !important;
     }
     
     .waza-form-col-half {
-        width: 100%;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+    
+    .waza-country-select {
+        width: 70px;
+        padding: 0.75rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    .waza-phone-input {
+        gap: 0.3rem;
+    }
+    
+    .waza-modal-content {
+        width: calc(100% - 1rem);
+        margin: 0 0.5rem;
+        max-height: calc(100vh - 1rem);
+    }
+    
+    .waza-detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .waza-detail-value {
+        text-align: left;
+    }
+}
+
+/* =====================================
+   Attendee Collection Styles
+   ===================================== */
+
+.waza-attendees-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--waza-bg);
+    border-radius: var(--waza-radius-lg);
+    border: 2px dashed var(--waza-border);
+}
+
+.waza-attendees-container h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--waza-text-main);
+    margin: 0 0 1rem 0;
+}
+
+.waza-attendee-card {
+    background: var(--waza-surface);
+    border: 1px solid var(--waza-border);
+    border-radius: var(--waza-radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--waza-shadow-sm);
+}
+
+.waza-attendee-card:last-child {
+    margin-bottom: 0;
+}
+
+.waza-attendee-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--waza-primary);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--waza-bg);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.waza-attendee-title::before {
+    content: "👤";
+    font-size: 1.25rem;
+}
+
+.waza-attendee-field {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--waza-border);
+    border-radius: var(--waza-radius);
+    font-size: 0.9375rem;
+    transition: all 0.2s;
+}
+
+.waza-attendee-field:focus {
+    outline: none;
+    border-color: var(--waza-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.waza-attendee-field::placeholder {
+    color: var(--waza-text-secondary);
+    opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+    .waza-attendees-container {
+        padding: 1rem;
+    }
+    
+    .waza-attendee-card {
+        padding: 1rem;
     }
 }

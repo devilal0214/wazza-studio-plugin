@@ -147,6 +147,11 @@ class AjaxHandler {
         $password_option = sanitize_text_field($_POST['password_option'] ?? 'auto');
         $customer_password = $_POST['customer_password'] ?? '';
         
+        // Get attendee details (for multi-seat bookings)
+        $attendee_names = isset($_POST['attendee_name']) ? array_map('sanitize_text_field', $_POST['attendee_name']) : [];
+        $attendee_emails = isset($_POST['attendee_email']) ? array_map('sanitize_email', $_POST['attendee_email']) : [];
+        $attendee_phones = isset($_POST['attendee_phone']) ? array_map('sanitize_text_field', $_POST['attendee_phone']) : [];
+        
         // Validation
         if (!$slot_id || !$customer_name || !$customer_email) {
             wp_send_json_error(__('Please fill in all required fields.', 'waza-booking'));
@@ -164,7 +169,7 @@ class AjaxHandler {
                 "SELECT s.*, p.ID as activity_post_id
                  FROM {$wpdb->prefix}waza_slots s
                  LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
-                 WHERE s.id = %d AND s.status = 'available'",
+                 WHERE s.id = %d AND s.status IN ('active', 'available')",
                 $slot_id
             ));
             
@@ -193,54 +198,39 @@ class AjaxHandler {
                 wp_send_json_error(__('Sorry, this slot is no longer available.', 'waza-booking'));
             }
             
-            // Create user if requested
+            // For guest users, handle account creation preference
             $user_id = get_current_user_id();
+            $needs_account_creation = false;
             $new_user_password = '';
             
             if (!$user_id && $create_account) {
-                // Generate or use provided password
-                if ($password_option === 'manual' && !empty($customer_password)) {
-                    if (strlen($customer_password) < 8) {
-                        wp_send_json_error(__('Password must be at least 8 characters long.', 'waza-booking'));
-                    }
-                    $new_user_password = $customer_password;
-                } else {
-                    $new_user_password = wp_generate_password(12, false);
-                }
-                
-                // Check if email already exists
+                // Check if email already exists - if so, skip account creation
                 if (email_exists($customer_email)) {
-                    wp_send_json_error(__('An account with this email already exists. Please log in.', 'waza-booking'));
-                }
-                
-                // Create user account
-                $user_id = wp_create_user($customer_email, $new_user_password, $customer_email);
-                
-                if (is_wp_error($user_id)) {
-                    wp_send_json_error(__('Failed to create user account.', 'waza-booking'));
-                }
-                
-                // Update user meta
-                wp_update_user([
-                    'ID' => $user_id,
-                    'display_name' => $customer_name,
-                    'role' => 'waza_student'
-                ]);
-                update_user_meta($user_id, 'phone', $customer_phone);
-                
-                // Send credentials email if auto-generated
-                if ($password_option === 'auto') {
-                    $this->send_account_credentials($customer_email, $customer_name, $new_user_password);
+                    // Email exists - user can still book, just won't create duplicate account
+                    $needs_account_creation = false;
+                } else {
+                    // Mark for account creation after payment
+                    $needs_account_creation = true;
+                    
+                    // Generate password now (we'll create the account after payment)
+                    if ($password_option === 'manual' && !empty($customer_password)) {
+                        if (strlen($customer_password) < 8) {
+                            wp_send_json_error(__('Password must be at least 8 characters long.', 'waza-booking'));
+                        }
+                        $new_user_password = $customer_password;
+                    } else {
+                        $new_user_password = wp_generate_password(12, false);
+                    }
                 }
             }
             
-            // Create booking record
+            // Create booking record (with pending status)
             $booking_data = [
-                'user_id' => $user_id,
+                'user_id' => $user_id ?: null,
                 'activity_id' => $activity_id,
                 'slot_id' => $slot_id,
                 'quantity' => $quantity,
-                'attendees_count' => $quantity, // Redundant but consistent
+                'attendees_count' => $quantity,
                 'total_amount' => $total_amount,
                 'discount_amount' => $discount_amount,
                 'coupon_code' => $discount_code,
@@ -254,27 +244,94 @@ class AjaxHandler {
                 'updated_at' => current_time('mysql')
             ];
             
-            $booking_id = $wpdb->insert(
+            $inserted = $wpdb->insert(
                 $wpdb->prefix . 'waza_bookings',
                 $booking_data
                 // Formats autodetected
             );
             
-            if (!$booking_id) {
+            if (!$inserted) {
                 wp_send_json_error(__('Failed to create booking.', 'waza-booking'));
+            }
+            
+            // Get the actual booking ID
+            $booking_id = $wpdb->insert_id;
+            
+            // Log booking creation activity
+            do_action('waza_log_activity', 'booking_created', 'booking', $booking_id, [
+                'description' => sprintf('New booking created for %s', $booking_data['user_name']),
+                'user_email' => $booking_data['user_email'],
+                'activity_name' => $activity->post_title ?? 'Unknown',
+                'quantity' => $booking_data['quantity'],
+                'total_amount' => $total_amount
+            ]);
+            
+            // Save attendee details if provided (for multi-seat bookings)
+            if (!empty($attendee_names) && count($attendee_names) > 0) {
+                $this->save_booking_attendees($booking_id, $attendee_names, $attendee_emails, $attendee_phones);
+            }
+            
+            // Store account creation info for later (using options since post doesn't exist yet)
+            if ($needs_account_creation) {
+                update_option("waza_pending_account_{$booking_id}", [
+                    'password' => $new_user_password,
+                    'password_option' => $password_option,
+                    'email' => sanitize_email($_POST['user_email']),
+                    'name' => sanitize_text_field($_POST['user_name'])
+                ], false);
             }
             
             // Handle payment
             if ($total_amount > 0 && $payment_method) {
-                $payment_data = $this->prepare_payment_data($booking_id, $total_amount, $payment_method, $booking_data);
-                
+                // Return booking info for payment processing
+                // Payment will be handled by PaymentManager via AJAX
                 wp_send_json_success([
                     'payment_required' => true,
-                    'payment_data' => $payment_data,
-                    'booking_id' => $booking_id
+                    'booking_id' => $booking_id,
+                    'total_amount' => $total_amount,
+                    'payment_method' => $payment_method,
+                    'customer_name' => $customer_name,
+                    'customer_email' => $customer_email,
+                    'activity_name' => $activity->post_title ?? 'Activity Booking'
                 ]);
             } else {
-                // Free booking or payment later
+                // Free booking or payment later - create account immediately
+                if ($needs_account_creation) {
+                    $password = get_post_meta($booking_id, '_pending_account_password', true);
+                    $password_option = get_post_meta($booking_id, '_pending_account_password_option', true);
+                    
+                    // Create user account
+                    $new_user_id = wp_create_user($customer_email, $password, $customer_email);
+                    
+                    if (!is_wp_error($new_user_id)) {
+                        wp_update_user([
+                            'ID' => $new_user_id,
+                            'display_name' => $customer_name,
+                            'role' => 'waza_student'
+                        ]);
+                        update_user_meta($new_user_id, 'phone', $customer_phone);
+                        
+                        // Update booking with user_id
+                        $wpdb->update(
+                            $wpdb->prefix . 'waza_bookings',
+                            ['user_id' => $new_user_id],
+                            ['id' => $booking_id],
+                            ['%d'],
+                            ['%d']
+                        );
+                        
+                        // Send credentials email if auto-generated
+                        if ($password_option === 'auto') {
+                            $this->send_account_credentials($customer_email, $customer_name, $password);
+                        }
+                        
+                        // Clean up meta
+                        delete_post_meta($booking_id, '_pending_account_creation');
+                        delete_post_meta($booking_id, '_pending_account_password');
+                        delete_post_meta($booking_id, '_pending_account_password_option');
+                    }
+                }
+                
                 $wpdb->update(
                     $wpdb->prefix . 'waza_bookings',
                     ['booking_status' => 'confirmed', 'payment_status' => 'completed'],
@@ -285,6 +342,9 @@ class AjaxHandler {
                 
                 // Update slot booked count
                 $this->update_slot_booked_count($slot_id, $quantity);
+                
+                // Create booking post for admin panel
+                $this->create_booking_post($booking_id);
                 
                 // Generate QR code
                 $qr_code = $this->generate_booking_qr($booking_id);
@@ -351,6 +411,60 @@ class AjaxHandler {
                 ['%d']
             );
             
+            // Get booking to update slot count and create user if needed
+            $booking = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}waza_bookings WHERE id = %d",
+                $booking_id
+            ));
+            
+            if ($booking) {
+                // Create user account now (after successful payment)
+                if (!$booking->user_id) {
+                    $pending_account = get_option("waza_pending_account_{$booking_id}");
+                    
+                    if ($pending_account && is_array($pending_account)) {
+                        $password = $pending_account['password'];
+                        $password_option = $pending_account['password_option'];
+                        
+                        // Create user account
+                        $user_id = wp_create_user($booking->user_email, $password, $booking->user_email);
+                        
+                        if (!is_wp_error($user_id)) {
+                            // Update user meta
+                            wp_update_user([
+                                'ID' => $user_id,
+                                'display_name' => $booking->user_name,
+                                'role' => 'waza_student'
+                            ]);
+                            update_user_meta($user_id, 'phone', $booking->user_phone);
+                            
+                            // Update booking with user_id
+                            $wpdb->update(
+                                $wpdb->prefix . 'waza_bookings',
+                                ['user_id' => $user_id],
+                                ['id' => $booking_id],
+                                ['%d'],
+                                ['%d']
+                            );
+                            
+                            // Send credentials email if auto-generated
+                            if ($password_option === 'auto') {
+                                $this->send_account_credentials($booking->user_email, $booking->user_name, $password);
+                            }
+                            
+                            // Clean up option
+                            delete_option("waza_pending_account_{$booking_id}");
+                        }
+                    }
+                }
+                
+                // Update slot booked count
+                $this->update_slot_booked_count($booking->slot_id, $booking->quantity);
+                
+                // Create booking post for admin panel
+                $this->create_booking_post($booking_id);
+            }
+            
             // Generate QR code
             $qr_code = $this->generate_booking_qr($booking_id);
             
@@ -359,7 +473,7 @@ class AjaxHandler {
             
             // Get booking details for response
             $booking = $wpdb->get_row($wpdb->prepare(
-                "SELECT b.*, s.start_date, s.start_time, p.post_title as activity_title
+                "SELECT b.*, s.start_datetime, s.end_datetime, p.post_title as activity_title
                  FROM {$wpdb->prefix}waza_bookings b
                  LEFT JOIN {$wpdb->prefix}waza_slots s ON b.slot_id = s.id
                  LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
@@ -370,7 +484,7 @@ class AjaxHandler {
             wp_send_json_success([
                 'booking_id' => $booking_id,
                 'activity_title' => $booking->activity_title,
-                'datetime' => date('l, F j, Y', strtotime($booking->start_date)) . ' at ' . date('g:i A', strtotime($booking->start_time)),
+                'datetime' => date('l, F j, Y', strtotime($booking->start_datetime)) . ' at ' . date('g:i A', strtotime($booking->start_datetime)),
                 'location' => get_post_meta($booking->activity_id, 'waza_activity_location', true) ?: 'TBD',
                 'qr_code' => $qr_code,
                 'dashboard_url' => home_url('/my-bookings'),
@@ -555,12 +669,10 @@ class AjaxHandler {
                     (s.capacity - s.booked_count) as available_spots
              FROM {$wpdb->prefix}waza_slots s
              LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
-             LEFT JOIN {$wpdb->posts} i ON s.instructor_id = i.ID
+             LEFT JOIN {$wpdb->posts} i ON s.instructor_id = i.ID AND i.post_type = 'waza_instructor'
              WHERE DATE(s.start_datetime) = %s
-             AND s.status = 'available'
-             AND s.start_datetime >= %s",
-            $date,
-            $current_datetime
+             AND s.status IN ('active', 'available')",
+            $date
         );
         
         if ($activity_id) {
@@ -574,14 +686,6 @@ class AjaxHandler {
         
         if ($results) {
             foreach ($results as $row) {
-                // Double-check that slot hasn't started yet (belt and suspenders)
-                $slot_start = strtotime($row->start_datetime);
-                $now = strtotime($current_datetime);
-                
-                if ($slot_start < $now) {
-                    continue; // Skip past slots
-                }
-                
                 $start_dt = new \DateTime($row->start_datetime);
                 $end_dt = new \DateTime($row->end_datetime);
                 
@@ -682,12 +786,18 @@ class AjaxHandler {
                          '</div>';
             }
             
-            // Book Now Button (only for available slots)
+            // Book Now Button (only show for available slots, not for past or full)
             if (!$unavailable) {
                 $html .= '<button class="waza-btn waza-btn-primary waza-select-slot" data-slot-id="' . $slot['id'] . '">' . 
                          esc_html__('Book Now', 'waza-booking') . 
                          '</button>';
+            } elseif (!$is_past) {
+                // Only show "Fully Booked" button for full slots (not past slots)
+                $html .= '<button class="waza-btn waza-btn-disabled" disabled>' . 
+                         esc_html__('Fully Booked', 'waza-booking') . 
+                         '</button>';
             }
+            // Past slots: no button, only "Expired" badge above
             
             $html .= '</div>';
         }
@@ -710,7 +820,7 @@ class AjaxHandler {
              FROM {$wpdb->prefix}waza_slots s
              LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
              LEFT JOIN {$wpdb->posts} i ON s.instructor_id = i.ID
-             WHERE s.id = %d AND s.status = 'available'",
+             WHERE s.id = %d AND s.status IN ('active', 'available')",
             $slot_id
         ));
         
@@ -729,6 +839,7 @@ class AjaxHandler {
             'end_time' => date('H:i', strtotime($slot_data->end_datetime)),
             'capacity' => (int)$slot_data->capacity,
             'booked_count' => (int)$slot_data->booked_count,
+            'available_spots' => max(0, (int)$slot_data->capacity - (int)$slot_data->booked_count),
             'location' => $slot_data->location ?: '',
             'notes' => $slot_data->notes ?: ''
         ];
@@ -796,12 +907,17 @@ class AjaxHandler {
                 
                 <div class="waza-form-group" style="margin-top: 1.5rem;">
                     <label for="booking_quantity">Number of Seats <span class="required">*</span></label>
-                    <select name="quantity" id="booking_quantity" class="waza-quantity-input" required>
-                        <?php for ($i = 1; $i <= min(10, (int)$slot->available_spots); $i++): ?>
-                            <option value="<?php echo $i; ?>"><?php echo $i; ?> <?php echo $i === 1 ? 'Seat' : 'Seats'; ?></option>
-                        <?php endfor; ?>
-                    </select>
+                    <input type="number" name="quantity" id="booking_quantity" class="waza-quantity-input" 
+                           min="1" max="<?php echo min(10, (int)$slot->available_spots); ?>" 
+                           value="1" required>
                     <p class="waza-field-help">Available seats: <?php echo (int)$slot->available_spots; ?></p>
+                </div>
+                
+                <!-- Attendee Details (shown when quantity > 1) -->
+                <div id="waza-attendees-container" class="waza-attendees-container" style="display: none; margin-top: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem;">Attendee Details</h4>
+                    <p class="waza-field-help" style="margin-bottom: 1rem;">Please provide details for each attendee. Each will receive their own QR code.</p>
+                    <div id="waza-attendee-fields"></div>
                 </div>
                 
                 <div class="waza-total-display" style="margin-top: 1rem; padding: 1rem; background: var(--waza-bg); border-radius: var(--waza-radius); font-size: 1.125rem;">
@@ -831,15 +947,17 @@ class AjaxHandler {
                     
                     <div class="waza-form-group waza-form-col-half">
                         <label for="customer_phone">Phone <span class="required">*</span></label>
-                        <div class="waza-phone-input">
-                            <select name="customer_phone_country" class="waza-country-select">
-                                <option value="+91" selected>🇮🇳 +91</option>
-                                <option value="+1">🇺🇸 +1</option>
-                                <option value="+44">🇬🇧 +44</option>
-                            </select>
-                            <input type="tel" name="customer_phone" id="customer_phone" required
-                                   value="<?php echo esc_attr($user_info['phone']); ?>"
-                                   placeholder="9876543210">
+                        <div class="waza-phone-wrapper">
+                            <div class="waza-phone-input">
+                                <select name="customer_phone_country" class="waza-country-select">
+                                    <option value="+91" selected>🇮🇳 +91</option>
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                </select>
+                                <input type="tel" name="customer_phone" id="customer_phone" required
+                                       value="<?php echo esc_attr($user_info['phone']); ?>"
+                                       placeholder="9876543210">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -896,12 +1014,35 @@ class AjaxHandler {
                  
                  <h5 style="margin-top: 20px;">Select Payment Method</h5>
                  <div class="waza-payment-methods">
+                     <?php
+                     // Get enabled payment gateways
+                     $razorpay_enabled = \WazaBooking\Admin\SettingsManager::get_setting('razorpay_enabled') === '1';
+                     $stripe_enabled = \WazaBooking\Admin\SettingsManager::get_setting('stripe_enabled') === '1';
+                     $phonepe_enabled = \WazaBooking\Admin\SettingsManager::get_setting('phonepe_enabled') === '1';
+                     
+                     if ($razorpay_enabled):
+                     ?>
+                     <div class="waza-payment-method selected" data-method="razorpay">
+                         <span class="waza-payment-icon">💳</span>
+                         <span class="waza-payment-label">Razorpay (Cards, UPI, Wallets, Net Banking)</span>
+                     </div>
+                     <input type="hidden" name="payment_method" value="razorpay">
+                     <?php elseif ($stripe_enabled): ?>
+                     <div class="waza-payment-method selected" data-method="stripe">
+                         <span class="waza-payment-icon">💳</span>
+                         <span class="waza-payment-label">Credit / Debit Card</span>
+                     </div>
+                     <input type="hidden" name="payment_method" value="stripe">
+                     <?php elseif ($phonepe_enabled): ?>
                      <div class="waza-payment-method selected" data-method="phonepe">
                          <span class="waza-payment-icon">💳</span>
                          <span class="waza-payment-label">PhonePe / UPI / Cards / Netbanking</span>
                      </div>
+                     <input type="hidden" name="payment_method" value="phonepe">
+                     <?php else: ?>
+                     <p style="color: #d63638;">No payment gateway is enabled. Please contact administrator.</p>
+                     <?php endif; ?>
                  </div>
-                 <input type="hidden" name="payment_method" value="phonepe">
             </div>
             
             <!-- Step 5: Confirmation (shown after payment) -->
@@ -935,7 +1076,7 @@ class AjaxHandler {
         global $wpdb;
         
         $slot = $wpdb->get_row($wpdb->prepare(
-            "SELECT capacity, booked_count FROM {$wpdb->prefix}waza_slots WHERE id = %d AND status = 'available'",
+            "SELECT capacity, booked_count FROM {$wpdb->prefix}waza_slots WHERE id = %d AND status IN ('active', 'available')",
             $slot_id
         ));
         
@@ -958,6 +1099,60 @@ class AjaxHandler {
             $quantity,
             $slot_id
         ));
+    }
+    
+    private function create_booking_post($booking_id) {
+        global $wpdb;
+        
+        // Get booking details
+        $booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT b.*, s.start_datetime, s.end_datetime, p.post_title as activity_title
+             FROM {$wpdb->prefix}waza_bookings b
+             LEFT JOIN {$wpdb->prefix}waza_slots s ON b.slot_id = s.id
+             LEFT JOIN {$wpdb->posts} p ON b.activity_id = p.ID
+             WHERE b.id = %d",
+            $booking_id
+        ));
+        
+        if (!$booking) {
+            return false;
+        }
+        
+        // Create post for admin panel visibility
+        $post_data = [
+            'post_title' => sprintf(
+                'Booking #%d - %s - %s',
+                $booking_id,
+                $booking->user_name,
+                $booking->activity_title
+            ),
+            'post_type' => 'waza_booking',
+            'post_status' => 'publish',
+            'post_author' => $booking->user_id ?: 1
+        ];
+        
+        $post_id = wp_insert_post($post_data);
+        
+        if ($post_id) {
+            // Link post to booking table record
+            update_post_meta($post_id, '_waza_booking_id', $booking_id);
+            update_post_meta($post_id, '_waza_slot_id', $booking->slot_id);
+            update_post_meta($post_id, '_waza_activity_id', $booking->activity_id);
+            update_post_meta($post_id, '_waza_user_email', $booking->user_email);
+            update_post_meta($post_id, '_waza_user_phone', $booking->user_phone);
+            update_post_meta($post_id, '_waza_total_amount', $booking->total_amount);
+            update_post_meta($post_id, '_waza_payment_status', $booking->payment_status);
+            update_post_meta($post_id, '_waza_booking_status', $booking->booking_status);
+            
+            // If there's pending account data in options, save it to post meta
+            $pending_account = get_option("waza_pending_account_{$booking_id}");
+            if ($pending_account && is_array($pending_account)) {
+                update_post_meta($post_id, '_pending_account_password', $pending_account['password']);
+                update_post_meta($post_id, '_pending_account_password_option', $pending_account['password_option']);
+            }
+        }
+        
+        return $post_id;
     }
     
     private function prepare_payment_data($booking_id, $amount, $method, $booking_data) {
@@ -1068,5 +1263,56 @@ Thank you for choosing Waza Booking!', 'waza-booking'),
             echo '<div class="waza-activity-card">' . esc_html($activity->post_title) . '</div>';
         }
         return ob_get_clean();
+    }
+    
+    /**
+     * Save booking attendees
+     */
+    private function save_booking_attendees($booking_id, $names, $emails, $phones) {
+        global $wpdb;
+        
+        $count = count($names);
+        
+        for ($i = 0; $i < $count; $i++) {
+            $name = isset($names[$i]) ? sanitize_text_field($names[$i]) : '';
+            $email = isset($emails[$i]) ? sanitize_email($emails[$i]) : '';
+            $phone = isset($phones[$i]) ? sanitize_text_field($phones[$i]) : '';
+            
+            // Skip if name is empty
+            if (empty($name)) {
+                continue;
+            }
+            
+            // Generate unique QR token for each attendee
+            $qr_token = 'WAZA-ATT-' . $booking_id . '-' . ($i + 1) . '-' . wp_generate_password(12, false);
+            
+            $wpdb->insert(
+                $wpdb->prefix . 'waza_booking_attendees',
+                [
+                    'booking_id' => $booking_id,
+                    'attendee_name' => $name,
+                    'attendee_email' => $email,
+                    'attendee_phone' => $phone,
+                    'qr_token' => $qr_token,
+                    'seat_number' => ($i + 1),
+                    'created_at' => current_time('mysql')
+                ],
+                ['%d', '%s', '%s', '%s', '%s', '%d', '%s']
+            );
+        }
+    }
+    
+    /**
+     * Get attendees for a booking
+     */
+    private function get_booking_attendees($booking_id) {
+        global $wpdb;
+        
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}waza_booking_attendees 
+             WHERE booking_id = %d 
+             ORDER BY seat_number ASC",
+            $booking_id
+        ));
     }
 }

@@ -295,26 +295,18 @@ class ShortcodeManager {
      * Booking confirmation shortcode
      */
     public function booking_confirmation_shortcode($atts) {
-        $booking_id = get_query_var('booking_id', '');
-        
-        if (!$booking_id) {
-            return '<div class="waza-alert waza-alert-error">' . 
-                   esc_html__('Invalid booking ID.', 'waza-booking') . 
-                   '</div>';
-        }
-        
         ob_start();
-        ?>
-        <div class="waza-booking-frontend waza-confirmation-container">
-            <div class="waza-confirmation-header">
-                <h2><?php esc_html_e('Booking Confirmation', 'waza-booking'); ?></h2>
-            </div>
-            
-            <div id="waza-booking-details" data-booking-id="<?php echo esc_attr($booking_id); ?>">
-                <!-- Booking details will be loaded via JavaScript -->
-            </div>
-        </div>
-        <?php
+        
+        // Include the booking confirmation template
+        $template_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'templates/booking-confirmation.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="waza-alert waza-alert-error">' . 
+                 esc_html__('Booking confirmation template not found.', 'waza-booking') . 
+                 '</div>';
+        }
         
         return ob_get_clean();
     }

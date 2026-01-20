@@ -21,6 +21,9 @@
         "phpunit/phpunit": "^10.0",
         "wp-coding-standards/wpcs": "^3.0"
     },
+    "replace": {
+        "rmccue/requests": "*"
+    },
     "autoload": {
         "psr-4": {
             "WazaBooking\\": "src/"

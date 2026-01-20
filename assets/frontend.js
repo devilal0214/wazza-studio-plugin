@@ -36,6 +36,7 @@
 
     // Global variables
     let selectedSlot = null;
+    let selectedDate = null;
     let currentMonth = new Date();
     let bookingInProgress = false;
 
@@ -147,6 +148,15 @@
         // Update to use button click and load form steps
         $(document).on('click', '.waza-select-slot', function (e) {
             e.stopPropagation();
+            
+            // Prevent booking if slot is unavailable or past
+            if ($(this).closest('.waza-time-slot').hasClass('unavailable') || 
+                $(this).closest('.waza-time-slot').hasClass('waza-past-slot') ||
+                $(this).prop('disabled')) {
+                showAlert('This slot is no longer available for booking.', 'error');
+                return false;
+            }
+            
             const slotId = $(this).data('slot-id');
             
             // Store selected slot
@@ -744,10 +754,10 @@
                 if (response.success) {
                     // Handle successful booking
                     if (response.data.payment_required) {
-                        // Redirect to payment gateway
-                        initiatePayment(response.data.payment_data);
+                        // Pass booking data to initiate payment
+                        initiatePayment(response.data);  // Pass full response data
                     } else {
-                        // Show success message
+                        // Show success message for free bookings
                         showBookingSuccess(response.data);
                     }
                 } else {
@@ -783,18 +793,24 @@
     /**
      * Initiate payment
      */
-    function initiatePayment(paymentData) {
-        const method = $('.waza-payment-method.selected').data('method');
-
-        if (method === 'phonepe') {
-            initiatePhonePePayment(paymentData);
-        } else if (method === 'razorpay') {
-            initiateRazorpayPayment(paymentData);
-        } else if (method === 'stripe') {
-            initiateStripePayment(paymentData);
-        } else {
-            showAlert('Invalid payment method selected.', 'error');
-        }
+    function initiatePayment(response) {
+        const bookingId = response.booking_id;
+        const amount = response.total_amount;
+        const customerName = response.customer_name || $('#customer_name').val() || '';
+        const customerEmail = response.customer_email || $('#customer_email').val() || '';
+        
+        // Build checkout URL
+        const checkoutUrl = waza_frontend.home_url + '/checkout/?' + 
+            'booking_id=' + bookingId + 
+            '&amount=' + amount + 
+            '&type=booking' +
+            '&customer_name=' + encodeURIComponent(customerName) +
+            '&customer_email=' + encodeURIComponent(customerEmail);
+        
+        console.log('Redirecting to checkout:', checkoutUrl);
+        
+        // Redirect to checkout page (same as activity browser)
+        window.location.href = checkoutUrl;
     }
 
     /**
@@ -822,7 +838,7 @@
                 status: 'SUCCESS'
             };
 
-            handlePaymentSuccess(mockResponse, 'phonepe');
+            handlePaymentSuccess(mockResponse, 'phonepe', paymentData.booking_id);
 
         }, 2000);
     }
@@ -844,7 +860,9 @@
             description: paymentData.description,
             order_id: paymentData.order_id,
             handler: function (response) {
-                handlePaymentSuccess(response, 'razorpay');
+                // Add booking_id to response before passing to handler
+                response.booking_id = paymentData.booking_id;
+                handlePaymentSuccess(response, 'razorpay', paymentData.booking_id);
             },
             prefill: {
                 name: paymentData.customer_name,
@@ -888,28 +906,36 @@
     /**
      * Handle payment success
      */
-    function handlePaymentSuccess(response, method) {
+    function handlePaymentSuccess(response, method, bookingId) {
+        console.log('Payment success handler called:', {response, method, bookingId});
         showLoading('Confirming payment...');
 
         $.ajax({
             url: getAjaxUrl(),
             type: 'POST',
             data: {
-                action: 'waza_confirm_payment',
-                payment_response: response,
+                action: 'waza_verify_payment',
+                gateway: method,
+                payment_data: response,
+                booking_id: bookingId,  // Pass booking_id to backend
                 payment_method: method,
+                payment_response: response,  // For backward compatibility
                 nonce: getNonce()
             },
             success: function (confirmResponse) {
+                console.log('Payment verification response:', confirmResponse);
                 hideLoading();
 
                 if (confirmResponse.success) {
+                    console.log('Payment verified successfully, showing success message');
                     showBookingSuccess(confirmResponse.data);
                 } else {
-                    showAlert(confirmResponse.data || 'Payment confirmation failed.', 'error');
+                    console.error('Payment verification failed:', confirmResponse.data);
+                    showAlert(confirmResponse.data.message || 'Payment confirmation failed.', 'error');
                 }
             },
-            error: function () {
+            error: function (xhr, status, error) {
+                console.error('Payment verification AJAX error:', {xhr, status, error});
                 hideLoading();
                 showAlert('Error confirming payment. Please contact support.', 'error');
             }
@@ -927,36 +953,85 @@
      * Show booking success
      */
     function showBookingSuccess(data) {
+        console.log('showBookingSuccess called with data:', data);
+        
+        // Safely handle data with defaults
+        const bookingId = data.booking_id || 'N/A';
+        const activityTitle = data.activity_title || 'N/A';
+        const datetime = data.datetime || 'TBD';
+        const location = data.location || 'TBD';
+        const qrCode = data.qr_code || data.qr_code_url || '';
+        const dashboardUrl = data.dashboard_url || '';
+        
+        console.log('Booking success details:', {bookingId, activityTitle, datetime, location, qrCode});
+        
         // Update step 5 with booking details
         const successHtml = `
             <div class="waza-success-message">
                 <div class="waza-success-icon">✓</div>
                 <h3>Booking Confirmed!</h3>
-                <p>Thank you for your booking. Confirmation email sent to your address.</p>
+                <p>Thank you for your booking. Confirmation email has been sent to your address.</p>
                 <div class="waza-booking-details" style="margin-top: 2rem; text-align: left; background: var(--waza-bg); padding: 1.5rem; border-radius: var(--waza-radius);">
-                    <p><strong>Booking ID:</strong> ${data.booking_id}</p>
-                    <p><strong>Activity:</strong> ${data.activity_title}</p>
-                    <p><strong>Date & Time:</strong> ${data.datetime}</p>
-                    ${data.location ? `<p><strong>Location:</strong> ${data.location}</p>` : ''}
+                    <p><strong>Booking ID:</strong> ${bookingId}</p>
+                    <p><strong>Activity:</strong> ${activityTitle}</p>
+                    <p><strong>Date & Time:</strong> ${datetime}</p>
+                    <p><strong>Location:</strong> ${location}</p>
                 </div>
-                ${data.qr_code ? `<div class="waza-qr-code" style="margin-top: 1.5rem;"><img src="${data.qr_code}" alt="QR Code" style="max-width: 200px;"></div>` : ''}
-                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
-                    <button class="waza-btn waza-btn-primary" onclick="location.reload()">Book Another</button>
-                    ${data.dashboard_url ? `<a href="${data.dashboard_url}" class="waza-btn waza-btn-secondary">View My Bookings</a>` : ''}
+                ${qrCode ? `
+                    <div class="waza-qr-code" style="margin-top: 1.5rem; text-align: center;">
+                        <p style="font-size: 0.9rem; color: var(--waza-text-secondary); margin-bottom: 0.5rem;">Your Booking QR Code</p>
+                        <img id="booking-qr-code" src="${qrCode}" alt="Booking QR Code" style="max-width: 200px; border: 2px solid var(--waza-border); padding: 10px; border-radius: var(--waza-radius);">
+                        <p style="font-size: 0.85rem; color: var(--waza-text-secondary); margin-top: 0.5rem;">Show this QR code at the venue</p>
+                        <button class="waza-btn waza-btn-secondary" onclick="downloadQRCode('${qrCode}', 'booking-${bookingId}-qr')" style="margin-top: 1rem;">
+                            📥 Download QR Code
+                        </button>
+                    </div>
+                ` : '<p style="margin-top: 1rem; color: var(--waza-text-secondary); font-size: 0.9rem;">QR code will be sent to your email</p>'}
+                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="waza-btn waza-btn-primary" onclick="location.reload()">Book Another Activity</button>
+                    ${dashboardUrl ? `<a href="${dashboardUrl}" class="waza-btn waza-btn-secondary">View My Bookings</a>` : ''}
                 </div>
             </div>
         `;
         
-        // Show step 5
-        $('.waza-step-section[data-step="5"]').html(successHtml).show().addClass('active');
-        $('.waza-step-section[data-step="4"]').removeClass('active').hide();
+        console.log('Updating modal with success HTML');
         
-        // Update progress to step 5
-        $('.waza-progress-bar-segment[data-step="4"]').addClass('completed').removeClass('active');
-        $('.waza-progress-bar-segment[data-step="5"]').addClass('active');
+        // Find the booking modal
+        const $modal = $('.waza-modal:visible');
+        const $step5 = $('.waza-step-section[data-step="5"]');
         
-        // Hide all buttons
-        $('.waza-form-actions').hide();
+        if ($step5.length) {
+            console.log('Step 5 found, updating content');
+            // Update step 5 content
+            $step5.html(successHtml).show().addClass('active');
+            
+            // Hide step 4
+            $('.waza-step-section[data-step="4"]').removeClass('active').hide();
+            
+            // Update progress to step 5
+            $('.waza-progress-bar-segment[data-step="4"]').addClass('completed').removeClass('active');
+            $('.waza-progress-bar-segment[data-step="5"]').addClass('active');
+            
+            // Hide all buttons
+            $('.waza-form-actions').hide();
+            
+            // Scroll modal to top
+            if ($modal.length) {
+                $modal.find('.waza-modal-content').animate({ scrollTop: 0 }, 300);
+            }
+        } else {
+            console.warn('Step 5 section not found, showing in modal body');
+            // Fallback: show directly in modal body
+            if ($modal.length) {
+                $modal.find('.waza-modal-body').html(successHtml);
+                $modal.find('.waza-modal-content').animate({ scrollTop: 0 }, 300);
+            } else {
+                // No modal, show as alert
+                showAlert('Booking confirmed! Booking ID: ' + bookingId, 'success');
+            }
+        }
+        
+        console.log('Success message displayed');
     }
 
     /**
@@ -975,6 +1050,56 @@
 
         // Update payment button text
         $('.waza-payment-button').text(`Pay ₹${total.toFixed(2)}`);
+        
+        // Update attendee fields
+        updateAttendeeFields(quantity);
+    }
+    
+    /**
+     * Update attendee fields based on quantity
+     */
+    function updateAttendeeFields(quantity) {
+        const container = $('#waza-attendees-container');
+        const fieldsWrapper = $('#waza-attendee-fields');
+        
+        if (quantity > 1) {
+            container.show();
+            fieldsWrapper.empty();
+            
+            for (let i = 1; i <= quantity; i++) {
+                const attendeeHtml = `
+                    <div class="waza-attendee-card" data-attendee="${i}">
+                        <h5 class="waza-attendee-title">Attendee #${i}</h5>
+                        <div class="waza-form-row">
+                            <div class="waza-form-group waza-form-col-full">
+                                <label for="attendee_name_${i}">Full Name <span class="required">*</span></label>
+                                <input type="text" name="attendee_name[]" id="attendee_name_${i}" 
+                                       class="waza-attendee-field" required
+                                       placeholder="Enter attendee's full name">
+                            </div>
+                        </div>
+                        <div class="waza-form-row">
+                            <div class="waza-form-group waza-form-col-half">
+                                <label for="attendee_email_${i}">Email <span class="required">*</span></label>
+                                <input type="email" name="attendee_email[]" id="attendee_email_${i}" 
+                                       class="waza-attendee-field" required
+                                       placeholder="attendee@email.com">
+                            </div>
+                            <div class="waza-form-group waza-form-col-half">
+                                <label for="attendee_phone_${i}">Phone <span class="required">*</span></label>
+                                <input type="tel" name="attendee_phone[]" id="attendee_phone_${i}" 
+                                       class="waza-attendee-field" required
+                                       placeholder="9876543210">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                fieldsWrapper.append(attendeeHtml);
+            }
+        } else {
+            container.hide();
+            fieldsWrapper.empty();
+        }
     }
 
     /**
@@ -1201,7 +1326,17 @@
          * Utility functions
          */
     function showFieldError(field, message) {
-        field.after(`<span class="waza-form-error">${message}</span>`);
+        // For phone field, place error after the wrapper instead of the input
+        if (field.attr('id') === 'customer_phone' || field.attr('type') === 'tel') {
+            const wrapper = field.closest('.waza-phone-wrapper');
+            if (wrapper.length) {
+                wrapper.after(`<span class="waza-form-error">${message}</span>`);
+            } else {
+                field.after(`<span class="waza-form-error">${message}</span>`);
+            }
+        } else {
+            field.after(`<span class="waza-form-error">${message}</span>`);
+        }
         field.addClass('error');
     }
 
@@ -1447,6 +1582,27 @@
         hideLoading: hideLoading,
         closeModal: closeModal,
         updateBookingTotal: updateBookingTotal
+    };
+    
+    // Global QR code download function
+    window.downloadQRCode = function(qrUrl, filename) {
+        fetch(qrUrl)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename + '.png';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showAlert('QR Code downloaded successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error downloading QR code:', error);
+                showAlert('Failed to download QR code. Please try again.', 'error');
+            });
     };
 
 })(jQuery);

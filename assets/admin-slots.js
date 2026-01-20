@@ -14,7 +14,7 @@ jQuery(document).ready(function ($) {
             $(this).addClass('nav-tab-active');
 
             // Show/hide tab content
-            $('.tab-content > div').hide();
+            $('.tab-content').hide();
             $('#tab-' + tab).show();
 
             // Update URL without reload

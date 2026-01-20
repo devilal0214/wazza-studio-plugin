@@ -32,33 +32,49 @@ class FrontendManager {
      * Output custom CSS based on admin settings
      */
     public function output_custom_css() {
+        // Prioritize CustomizationManager settings over SettingsManager
+        $customization_settings = get_option('waza_customization_options', []);
         $settings = get_option('waza_booking_settings', []);
         
-        $primary_color = $settings['appearance_primary_color'] ?? '#5BC0BE';
-        $secondary_color = $settings['appearance_secondary_color'] ?? '#3A506B';
-        $background_color = $settings['appearance_background_color'] ?? '#F5F5F5';
-        $text_color = $settings['appearance_text_color'] ?? '#333333';
-        $border_radius = $settings['appearance_border_radius'] ?? '8';
+        // Use customization settings first, fallback to booking settings
+        $primary_color = $customization_settings['calendar_primary_color'] ?? $settings['appearance_primary_color'] ?? '#5BC0BE';
+        $secondary_color = $customization_settings['calendar_secondary_color'] ?? $settings['appearance_secondary_color'] ?? '#3A506B';
+        $background_color = $customization_settings['calendar_background_color'] ?? $settings['appearance_background_color'] ?? '#F5F5F5';
+        $text_color = $customization_settings['calendar_text_color'] ?? $settings['appearance_text_color'] ?? '#333333';
+        $border_radius = $customization_settings['border_radius'] ?? $settings['appearance_border_radius'] ?? '8';
         $slots_bg_color = $settings['appearance_slots_bg_color'] ?? '#D1FAE5';
-        $font_family = $settings['appearance_font_family'] ?? 'system';
+        $font_family = $customization_settings['primary_font'] ?? $settings['appearance_font_family'] ?? 'system';
         
         // Map font family
         $font_family_map = [
             'system' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            'inherit' => '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
             'roboto' => '"Roboto", sans-serif',
+            'Roboto' => '"Roboto", sans-serif',
             'open-sans' => '"Open Sans", sans-serif',
+            'Open Sans' => '"Open Sans", sans-serif',
             'lato' => '"Lato", sans-serif',
-            'montserrat' => '"Montserrat", sans-serif'
+            'Lato' => '"Lato", sans-serif',
+            'montserrat' => '"Montserrat", sans-serif',
+            'Montserrat' => '"Montserrat", sans-serif',
+            'Inter' => '"Inter", sans-serif',
+            'Poppins' => '"Poppins", sans-serif'
         ];
         $font_family_css = $font_family_map[$font_family] ?? $font_family_map['system'];
         
         // Load Google Fonts if needed
-        if ($font_family !== 'system') {
+        if ($font_family !== 'system' && $font_family !== 'inherit') {
             $font_url_map = [
                 'roboto' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap',
+                'Roboto' => 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap',
                 'open-sans' => 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap',
+                'Open Sans' => 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap',
                 'lato' => 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap',
-                'montserrat' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap'
+                'Lato' => 'https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap',
+                'montserrat' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap',
+                'Montserrat' => 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap',
+                'Inter' => 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+                'Poppins' => 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap'
             ];
             if (isset($font_url_map[$font_family])) {
                 echo '<link rel="preconnect" href="https://fonts.googleapis.com">';
@@ -188,20 +204,22 @@ class FrontendManager {
         
         // Get all plugin settings
         $settings = get_option('waza_booking_settings', []);
+        $customization = get_option('waza_customization_options', []);
         
         // Localize script with API endpoints and settings
         wp_localize_script('waza-frontend', 'waza_frontend', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'apiUrl' => rest_url('waza/v1/'),
             'nonce' => wp_create_nonce('waza_frontend_nonce'),
+            'home_url' => home_url(),
             'is_logged_in' => is_user_logged_in() ? '1' : '0',
             'login_url' => get_permalink(get_option('waza_login_page_id')) ?: home_url('/login'),
             'appearance' => [
-                'primary_color' => $settings['appearance_primary_color'] ?? '#5BC0BE',
-                'secondary_color' => $settings['appearance_secondary_color'] ?? '#3A506B',
-                'background_color' => $settings['appearance_background_color'] ?? '#F5F5F5',
-                'text_color' => $settings['appearance_text_color'] ?? '#333333',
-                'border_radius' => $settings['appearance_border_radius'] ?? '8',
+                'primary_color' => $customization['calendar_primary_color'] ?? $settings['appearance_primary_color'] ?? '#5BC0BE',
+                'secondary_color' => $customization['calendar_secondary_color'] ?? $settings['appearance_secondary_color'] ?? '#3A506B',
+                'background_color' => $customization['calendar_background_color'] ?? $settings['appearance_background_color'] ?? '#F5F5F5',
+                'text_color' => $customization['calendar_text_color'] ?? $settings['appearance_text_color'] ?? '#333333',
+                'border_radius' => $customization['border_radius'] ?? $settings['appearance_border_radius'] ?? '8',
                 'progress_style' => $settings['appearance_progress_style'] ?? 'bar',
                 'booking_steps' => $settings['appearance_booking_steps'] ?? '4',
                 'step_labels' => $settings['appearance_step_labels'] ?? 'Time,Details,Payment,Done',
@@ -209,10 +227,15 @@ class FrontendManager {
                 'terms_text' => $settings['appearance_terms_text'] ?? 'I agree to the terms of service',
                 'button_next' => $settings['appearance_button_next'] ?? 'NEXT',
                 'button_back' => $settings['appearance_button_back'] ?? 'BACK',
-                'font_family' => $settings['appearance_font_family'] ?? 'system'
+                'font_family' => $customization['primary_font'] ?? $settings['appearance_font_family'] ?? 'system'
             ],
             'calendar_settings' => [
-                'primary_color' => $settings['waza_calendar_primary_color'] ?? $settings['appearance_primary_color'] ?? '#5BC0BE',
+                'primary_color' => $customization['calendar_primary_color'] ?? $settings['appearance_primary_color'] ?? '#5BC0BE',
+                'secondary_color' => $customization['calendar_secondary_color'] ?? $settings['appearance_secondary_color'] ?? '#3A506B',
+                'accent_color' => $customization['calendar_accent_color'] ?? '#e74c3c',
+                'background_color' => $customization['calendar_background_color'] ?? '#ffffff',
+                'text_color' => $customization['calendar_text_color'] ?? '#333333',
+                'border_color' => $customization['calendar_border_color'] ?? '#e1e5e9',
                 'start_of_week' => $settings['waza_calendar_start_of_week'] ?? 'sunday',
                 'time_format' => $settings['waza_calendar_time_format'] ?? '12h',
                 'show_instructor' => $settings['waza_calendar_show_instructor'] ?? 'yes',

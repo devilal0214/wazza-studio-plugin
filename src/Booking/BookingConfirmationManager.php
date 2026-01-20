@@ -68,17 +68,55 @@ class BookingConfirmationManager {
      * Booking confirmation shortcode
      */
     public function confirmation_shortcode($atts) {
-        $booking_id = isset($_GET['booking_id']) ? intval($_GET['booking_id']) : 0;
+        error_log('=== CONFIRMATION SHORTCODE CALLED ===');
         
-        if (!$booking_id) {
+        $booking_id = isset($_GET['booking_id']) ? intval($_GET['booking_id']) : 0;
+        $rental_id = isset($_GET['rental_id']) ? intval($_GET['rental_id']) : 0;
+        
+        error_log('Booking ID: ' . $booking_id . ', Rental ID: ' . $rental_id);
+        
+        if (!$booking_id && !$rental_id) {
+            error_log('NO BOOKING OR RENTAL ID - Returning error');
             return '<div class="waza-message waza-error">' . __('No booking information found.', 'waza-booking') . '</div>';
         }
         
+        // If rental_id is present, load the rental confirmation template
+        if ($rental_id) {
+            error_log('Loading rental confirmation template');
+            ob_start();
+            include plugin_dir_path(dirname(__FILE__)) . '../templates/booking-confirmation.php';
+            return ob_get_clean();
+        }
+        
+        // Otherwise proceed with booking confirmation
         global $wpdb;
         
+        // Get booking with payment details
         $booking = $wpdb->get_row($wpdb->prepare("
-            SELECT * FROM {$wpdb->prefix}waza_bookings WHERE id = %d
+            SELECT b.*, s.start_datetime, s.end_datetime, s.activity_id, s.instructor_id,
+                   p.post_title as activity_title,
+                   u.display_name as instructor_name
+            FROM {$wpdb->prefix}waza_bookings b
+            LEFT JOIN {$wpdb->prefix}waza_slots s ON b.slot_id = s.id
+            LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->users} u ON s.instructor_id = u.ID
+            WHERE b.id = %d
+            LIMIT 1
         ", $booking_id));
+        
+        // Get payment details separately
+        $payment = $wpdb->get_row($wpdb->prepare("
+            SELECT * FROM {$wpdb->prefix}waza_payments 
+            WHERE booking_id = %d 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        ", $booking_id));
+        
+        // Merge payment data into booking object
+        if ($payment) {
+            $booking->transaction_id = $payment->payment_id ?? '';
+            $booking->payment_gateway = $payment->payment_method ?? '';
+        }
         
         if (!$booking) {
             return '<div class="waza-message waza-error">' . __('Booking not found.', 'waza-booking') . '</div>';
@@ -91,10 +129,48 @@ class BookingConfirmationManager {
         
         // Get activity details
         $activity = get_post($slot->activity_id);
+        $activity_location = get_post_meta($slot->activity_id, 'waza_activity_location', true) ?: __('To be announced', 'waza-booking');
         
         // Get QR code
         $qr_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('qr');
-        $qr_image = $qr_manager->generate_qr_image($booking->qr_token, 300);
+        $qr_image = false;
+        
+        // Generate comprehensive QR code data for admin verification and attendance
+        $qr_data = [
+            'type' => 'booking',
+            'booking_id' => $booking->id,
+            'booking_code' => 'WB-' . str_pad($booking->id, 5, '0', STR_PAD_LEFT),
+            'user_name' => $booking->user_name,
+            'user_email' => $booking->user_email,
+            'user_phone' => $booking->user_phone,
+            'activity_id' => $slot->activity_id,
+            'activity_name' => $booking->activity_title,
+            'slot_id' => $booking->slot_id,
+            'date' => date('Y-m-d', strtotime($slot->start_datetime)),
+            'time' => date('H:i', strtotime($slot->start_datetime)) . '-' . date('H:i', strtotime($slot->end_datetime)),
+            'quantity' => $booking->quantity,
+            'status' => $booking->booking_status,
+            'payment_status' => $booking->payment_status,
+            'verified' => false,
+            'attended' => false,
+            'generated_at' => time()
+        ];
+        
+        $qr_data_string = json_encode($qr_data);
+        
+        error_log('=== QR CODE GENERATION ===');
+        error_log('Booking ID: ' . $booking->id);
+        error_log('QR Manager exists: ' . ($qr_manager ? 'YES' : 'NO'));
+        error_log('QR Data: ' . $qr_data_string);
+        error_log('QR Data length: ' . strlen($qr_data_string));
+        
+        if ($qr_manager) {
+            $qr_image = $qr_manager->generate_qr_image($qr_data_string, 300);
+            error_log('QR Image generated: ' . ($qr_image ? 'YES (length: ' . strlen($qr_image) . ')' : 'NO/FALSE'));
+            if ($qr_image) {
+                error_log('QR Image starts with: ' . substr($qr_image, 0, 50));
+            }
+        }
         
         ob_start();
         ?>
@@ -118,41 +194,41 @@ class BookingConfirmationManager {
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Activity:', 'waza-booking'); ?></span>
-                        <span class="waza-detail-value"><?php echo esc_html($activity->post_title); ?></span>
+                        <span class="waza-detail-value"><?php echo esc_html($booking->activity_title); ?></span>
                     </div>
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Date:', 'waza-booking'); ?></span>
-                        <span class="waza-detail-value"><?php echo wp_date(get_option('date_format'), strtotime($slot->start_datetime)); ?></span>
+                        <span class="waza-detail-value"><?php echo date_i18n('F j, Y', strtotime($slot->start_datetime)); ?></span>
                     </div>
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Time:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value">
                             <?php 
-                            echo wp_date(get_option('time_format'), strtotime($slot->start_datetime));
-                            echo ' - ';
-                            echo wp_date(get_option('time_format'), strtotime($slot->end_datetime));
+                            echo date_i18n('g:i a', strtotime($slot->start_datetime));
+                            echo ' – ';
+                            echo date_i18n('g:i a', strtotime($slot->end_datetime));
                             ?>
                         </span>
                     </div>
                     
-                    <?php if ($slot->location): ?>
+                    <?php if ($activity_location): ?>
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Location:', 'waza-booking'); ?></span>
-                        <span class="waza-detail-value"><?php echo esc_html($slot->location); ?></span>
+                        <span class="waza-detail-value"><?php echo esc_html($activity_location); ?></span>
                     </div>
                     <?php endif; ?>
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Participants:', 'waza-booking'); ?></span>
-                        <span class="waza-detail-value"><?php echo intval($booking->attendees_count); ?></span>
+                        <span class="waza-detail-value"><?php echo intval($booking->quantity); ?></span>
                     </div>
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Total Amount:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value waza-amount">
-                            <?php echo $this->format_currency($booking->total_amount); ?>
+                            ₹<?php echo number_format($booking->total_amount, 2); ?>
                         </span>
                     </div>
                     
@@ -160,10 +236,28 @@ class BookingConfirmationManager {
                         <span class="waza-detail-label"><?php _e('Payment Status:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value">
                             <span class="waza-badge waza-badge-<?php echo esc_attr($booking->payment_status); ?>">
-                                <?php echo ucfirst($booking->payment_status); ?>
+                                <?php echo ucfirst($booking->payment_status ?: 'Completed'); ?>
                             </span>
                         </span>
                     </div>
+                    
+                    <?php if (!empty($booking->transaction_id)): ?>
+                    <div class="waza-detail-row">
+                        <span class="waza-detail-label"><?php _e('Transaction ID:', 'waza-booking'); ?></span>
+                        <span class="waza-detail-value" style="font-family: monospace; font-size: 12px;">
+                            <?php echo esc_html($booking->transaction_id); ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($booking->payment_gateway)): ?>
+                    <div class="waza-detail-row">
+                        <span class="waza-detail-label"><?php _e('Payment Method:', 'waza-booking'); ?></span>
+                        <span class="waza-detail-value">
+                            <?php echo ucfirst($booking->payment_gateway); ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="waza-confirmation-qr">
@@ -173,12 +267,11 @@ class BookingConfirmationManager {
                     </p>
                     <div class="waza-qr-code">
                         <?php if ($qr_image): ?>
-                            <img src="<?php echo esc_url($qr_image); ?>" alt="QR Code" />
+                            <img src="<?php echo $qr_image; ?>" alt="QR Code" id="booking-qr-image" style="max-width: 300px; height: auto;" />
+                        <?php else: ?>
+                            <p style="color: #666;"><?php _e('QR code will be generated shortly.', 'waza-booking'); ?></p>
                         <?php endif; ?>
                     </div>
-                    <p class="waza-qr-token">
-                        <small><?php echo esc_html($booking->qr_token); ?></small>
-                    </p>
                 </div>
             </div>
             
@@ -186,40 +279,110 @@ class BookingConfirmationManager {
                 <h3><?php _e('What\'s Next?', 'waza-booking'); ?></h3>
                 
                 <div class="waza-action-buttons">
-                    <button class="waza-button waza-button-primary waza-add-to-calendar" data-booking-id="<?php echo esc_attr($booking->id); ?>">
+                    <button class="waza-button waza-button-primary" onclick="addToCalendarConfirmation()">
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
                         </svg>
                         <?php _e('Add to Calendar', 'waza-booking'); ?>
                     </button>
                     
-                    <a href="<?php echo esc_url(home_url('/my-bookings')); ?>" class="waza-button waza-button-secondary">
+                    <a href="<?php echo esc_url(home_url('/my-bookings/')); ?>" class="waza-button waza-button-secondary">
                         <?php _e('View My Bookings', 'waza-booking'); ?>
                     </a>
                     
-                    <button class="waza-button waza-button-outline waza-download-qr" data-booking-id="<?php echo esc_attr($booking->id); ?>">
+                    <button class="waza-button waza-button-outline" onclick="downloadConfirmationQR()">
                         <?php _e('Download QR Code', 'waza-booking'); ?>
                     </button>
                 </div>
-                
-                <div class="waza-calendar-dropdown" style="display:none;">
-                    <a href="#" class="waza-calendar-option" data-type="google">
-                        <img src="<?php echo WAZA_BOOKING_PLUGIN_URL; ?>assets/images/google-calendar.svg" alt="Google Calendar" />
-                        <?php _e('Google Calendar', 'waza-booking'); ?>
-                    </a>
-                    <a href="#" class="waza-calendar-option" data-type="outlook">
-                        <img src="<?php echo WAZA_BOOKING_PLUGIN_URL; ?>assets/images/outlook.svg" alt="Outlook" />
-                        <?php _e('Outlook', 'waza-booking'); ?>
-                    </a>
-                    <a href="#" class="waza-calendar-option" data-type="apple">
-                        <img src="<?php echo WAZA_BOOKING_PLUGIN_URL; ?>assets/images/apple.svg" alt="Apple Calendar" />
-                        <?php _e('Apple Calendar', 'waza-booking'); ?>
-                    </a>
-                    <a href="#" class="waza-calendar-option" data-type="ics">
-                        <?php _e('Download .ics File', 'waza-booking'); ?>
-                    </a>
-                </div>
             </div>
+            
+            <script>
+            // Download QR Code function
+            function downloadConfirmationQR() {
+                console.log('=== Download Confirmation QR Called ===');
+                const qrImage = document.getElementById('booking-qr-image');
+                console.log('QR Image element:', qrImage);
+                
+                if (!qrImage || !qrImage.src) {
+                    console.error('QR Image not found or no src');
+                    alert('<?php _e('QR Code not available. Please refresh the page.', 'waza-booking'); ?>');
+                    return;
+                }
+                
+                console.log('QR Image src length:', qrImage.src.length);
+                console.log('QR Image src starts with:', qrImage.src.substring(0, 50));
+                
+                // For base64 data URLs, we need to convert to blob
+                if (qrImage.src.startsWith('data:')) {
+                    try {
+                        const base64Data = qrImage.src.split(',')[1];
+                        const byteCharacters = atob(base64Data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'image/png' });
+                        const url = window.URL.createObjectURL(blob);
+                        
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'booking-WB-<?php echo str_pad($booking->id, 5, '0', STR_PAD_LEFT); ?>-qr.png';
+                        console.log('Download filename:', link.download);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        console.log('Download completed successfully');
+                    } catch (error) {
+                        console.error('Error downloading QR:', error);
+                        alert('Error downloading QR code: ' + error.message);
+                    }
+                } else {
+                    const link = document.createElement('a');
+                    link.href = qrImage.src;
+                    link.download = 'booking-WB-<?php echo str_pad($booking->id, 5, '0', STR_PAD_LEFT); ?>-qr.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    console.log('Download completed successfully');
+                }
+            }
+            
+            function addToCalendarConfirmation() {
+                const startDate = '<?php echo date('Ymd\THis', strtotime($slot->start_datetime)); ?>';
+                const endDate = '<?php echo date('Ymd\THis', strtotime($slot->end_datetime)); ?>';
+                const title = '<?php echo addslashes($booking->activity_title); ?>';
+                const description = 'Booking ID: WB-<?php echo str_pad($booking->id, 5, '0', STR_PAD_LEFT); ?>\\nActivity: <?php echo addslashes($booking->activity_title); ?>';
+                const location = '<?php echo addslashes($activity_location); ?>';
+                
+                const icsContent = [
+                    'BEGIN:VCALENDAR',
+                    'VERSION:2.0',
+                    'PRODID:-//Waza Booking//EN',
+                    'BEGIN:VEVENT',
+                    'UID:booking-<?php echo $booking->id; ?>@' + window.location.hostname,
+                    'DTSTAMP:' + startDate,
+                    'DTSTART:' + startDate,
+                    'DTEND:' + endDate,
+                    'SUMMARY:' + title,
+                    'DESCRIPTION:' + description,
+                    'LOCATION:' + location,
+                    'STATUS:CONFIRMED',
+                    'END:VEVENT',
+                    'END:VCALENDAR'
+                ].join('\\r\\n');
+                
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'booking-<?php echo $booking->id; ?>.ics';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(link.href);
+            }
+            </script>
             
             <div class="waza-confirmation-notice">
                 <p><strong><?php _e('Important:', 'waza-booking'); ?></strong></p>

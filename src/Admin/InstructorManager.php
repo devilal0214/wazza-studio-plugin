@@ -28,6 +28,8 @@ class InstructorManager {
         add_filter('manage_edit-waza_instructor_sortable_columns', [$this, 'sortable_instructor_columns']);
         add_action('admin_footer', [$this, 'add_approval_js']);
         add_action('wp_ajax_waza_toggle_instructor_status', [$this, 'toggle_instructor_status']);
+        add_action('wp_ajax_waza_sync_instructor', [$this, 'sync_single_instructor']);
+        add_action('wp_ajax_waza_get_instructor_details', [$this, 'ajax_get_instructor_details']);
         
         // Handle post status transitions for emails
         add_action('transition_post_status', [$this, 'handle_status_transition'], 10, 3);
@@ -61,12 +63,32 @@ class InstructorManager {
                 
             case 'status':
                 $post = get_post($post_id);
+                $user_id = get_post_meta($post_id, '_waza_user_id', true);
                 $is_approved = $post->post_status === 'publish';
                 $class = $is_approved ? 'approved' : 'pending';
                 $label = $is_approved ? __('Approved', 'waza-booking') : __('Pending', 'waza-booking');
                 
                 echo '<span class="waza-status-badge status-' . esc_attr($class) . '">' . esc_html($label) . '</span>';
-                echo '<br><a href="#" class="waza-toggle-status" data-id="' . esc_attr($post_id) . '" data-status="' . esc_attr($post->post_status) . '">';
+                
+                // Show user linkage status
+                if ($user_id) {
+                    $user = get_userdata($user_id);
+                    if ($user) {
+                        echo '<br><small style="color: #46a049;">✓ User: ' . esc_html($user->user_login) . '</small>';
+                    } else {
+                        echo '<br><small style="color: #dc3232;">⚠ User deleted</small>';
+                    }
+                } else {
+                    $email = get_post_meta($post_id, '_waza_email', true);
+                    if ($email) {
+                        echo '<br><small style="color: #d63638;">⚠ Not linked</small>';
+                        echo '<br><a href="#" class="waza-sync-instructor" data-id="' . esc_attr($post_id) . '" style="font-size: 11px;">Sync Now</a>';
+                    }
+                }
+                
+                echo '<br><a href="#" class="waza-view-details" data-id="' . esc_attr($post_id) . '" style="color: #2271b1;">' . __('View Details', 'waza-booking') . '</a>';
+                echo ' | ';
+                echo '<a href="#" class="waza-toggle-status" data-id="' . esc_attr($post_id) . '" data-status="' . esc_attr($post->post_status) . '">';
                 echo $is_approved ? __('Disapprove', 'waza-booking') : __('Approve', 'waza-booking');
                 echo '</a>';
                 break;
@@ -123,6 +145,85 @@ class InstructorManager {
                     }
                 });
             });
+            
+            $('.waza-sync-instructor').on('click', function(e) {
+                e.preventDefault();
+                var $link = $(this);
+                var id = $link.data('id');
+                var originalText = $link.text();
+                
+                if (!confirm('Create a WordPress user account for this instructor?')) {
+                    return;
+                }
+                
+                $link.text('Syncing...');
+                
+                $.post(ajaxurl, {
+                    action: 'waza_sync_instructor',
+                    instructor_id: id,
+                    nonce: '<?php echo wp_create_nonce('waza_sync_instructor'); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        window.location.reload();
+                    } else {
+                        alert(response.data || 'Error syncing instructor');
+                        $link.text(originalText);
+                    }
+                });
+            });
+            
+            // View instructor details modal
+            $('.waza-view-details').on('click', function(e) {
+                e.preventDefault();
+                var id = $(this).data('id');
+                
+                $.post(ajaxurl, {
+                    action: 'waza_get_instructor_details',
+                    instructor_id: id,
+                    nonce: '<?php echo wp_create_nonce('waza_instructor_details'); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        showInstructorModal(response.data);
+                    } else {
+                        alert('Error loading instructor details');
+                    }
+                });
+            });
+            
+            function showInstructorModal(data) {
+                var socialHtml = '';
+                if (data.social_links && Object.keys(data.social_links).length > 0) {
+                    socialHtml = '<div style=\"margin-top: 15px;\"><strong>Social Links:</strong><ul style=\"margin: 5px 0; padding-left: 20px;\">';
+                    for (var platform in data.social_links) {
+                        socialHtml += '<li><strong>' + platform.charAt(0).toUpperCase() + platform.slice(1) + ':</strong> <a href=\"' + data.social_links[platform] + '\" target=\"_blank\">' + data.social_links[platform] + '</a></li>';
+                    }
+                    socialHtml += '</ul></div>';
+                }
+                
+                var modalHtml = `
+                    <div id=\"instructor-details-modal\" style=\"position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100000; display: flex; align-items: center; justify-content: center;\">
+                        <div style=\"background: white; padding: 30px; border-radius: 8px; max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative;\">
+                            <button onclick=\"jQuery('#instructor-details-modal').remove()\" style=\"position: absolute; top: 15px; right: 15px; background: #dc3232; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px;\">&times;</button>
+                            <h2 style=\"margin-top: 0;\">${data.name}</h2>
+                            <div style=\"line-height: 1.8;\">
+                                <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+                                <p><strong>Phone:</strong> ${data.phone || 'N/A'}</p>
+                                ${data.bio ? '<p><strong>Bio:</strong> ' + data.bio + '</p>' : ''}
+                                <p><strong>Skills:</strong> ${data.skills || 'N/A'}</p>
+                                ${data.experience ? '<p><strong>Experience:</strong> ' + data.experience + ' years</p>' : ''}
+                                ${data.certifications ? '<p><strong>Certifications:</strong> ' + data.certifications + '</p>' : ''}
+                                <p><strong>Rating:</strong> ${'★'.repeat(data.rating || 0)}</p>
+                                ${data.hourly_rate ? '<p><strong>Hourly Rate:</strong> ₹' + data.hourly_rate + '</p>' : ''}
+                                ${socialHtml}
+                                <p><strong>Email Verified:</strong> ${data.email_verified ? 'Yes ✓' : 'No'}</p>
+                                <p><strong>Status:</strong> ${data.status === 'publish' ? 'Approved' : 'Pending'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('body').append(modalHtml);
+            }
         });
         </script>
         <style>
@@ -180,18 +281,194 @@ class InstructorManager {
      * Send approval email to instructor
      */
     private function send_approval_email($post) {
-        $email = get_post_meta($post->ID, '_waza_email', true);
-        if (!$email) {
+        // Get user ID from post meta
+        $user_id = get_post_meta($post->ID, '_waza_user_id', true);
+        
+        if (!$user_id) {
             return;
         }
         
-        $subject = sprintf(__('Your Instructor Account on %s has been approved!', 'waza-booking'), get_bloginfo('name'));
-        $message = sprintf(__('Hello %s,', 'waza-booking'), $post->post_title) . "\r\n\r\n";
-        $message .= __('Congratulations! Your instructor account has been approved by the administrator.', 'waza-booking') . "\r\n";
-        $message .= __('You can now log in to the dashboard and manage your slots.', 'waza-booking') . "\r\n\r\n";
-        $message .= __('Login here: ', 'waza-booking') . home_url('/login/') . "\r\n\r\n";
-        $message .= __('Thanks!', 'waza-booking');
+        $user = get_userdata($user_id);
         
-        wp_mail($email, $subject, $message);
+        if (!$user) {
+            return;
+        }
+        
+        // Generate password reset link
+        $reset_key = get_password_reset_key($user);
+        
+        if (is_wp_error($reset_key)) {
+            return;
+        }
+        
+        $reset_url = network_site_url("wp-login.php?action=rp&key=$reset_key&login=" . rawurlencode($user->user_login), 'login');
+        $dashboard_url = home_url('/instructor-dashboard/');
+        
+        // Use email template manager
+        $email_template_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('email_template');
+        
+        if ($email_template_manager) {
+            $email_template_manager->send_email('password_reset', $user->user_email, [
+                'user_name' => $post->post_title,
+                'user_first_name' => $post->post_title,
+                'reset_url' => $reset_url,
+                'dashboard_url' => $dashboard_url,
+                'username' => $user->user_login,
+                'user_email' => $user->user_email,
+                'message' => __('Congratulations! Your instructor application has been approved!', 'waza-booking')
+            ]);
+        }
+    }
+    
+    /**
+     * Sync single instructor to WordPress user
+     */
+    public function sync_single_instructor() {
+        check_ajax_referer('waza_sync_instructor', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Permission denied', 'waza-booking'));
+        }
+        
+        $instructor_id = intval($_POST['instructor_id']);
+        $post = get_post($instructor_id);
+        
+        if (!$post || $post->post_type !== 'waza_instructor') {
+            wp_send_json_error(__('Invalid instructor ID', 'waza-booking'));
+        }
+        
+        // Check if already linked
+        $existing_user_id = get_post_meta($instructor_id, '_waza_user_id', true);
+        if ($existing_user_id && get_userdata($existing_user_id)) {
+            wp_send_json_error(__('Instructor already linked to a user', 'waza-booking'));
+        }
+        
+        // Get instructor email
+        $email = get_post_meta($instructor_id, '_waza_email', true);
+        
+        if (!$email || !is_email($email)) {
+            wp_send_json_error(__('No valid email found for this instructor', 'waza-booking'));
+        }
+        
+        // Check if user already exists with this email
+        $user = get_user_by('email', $email);
+        
+        if ($user) {
+            // Link to existing user
+            update_post_meta($instructor_id, '_waza_user_id', $user->ID);
+            wp_send_json_success([
+                'message' => sprintf(__('Linked to existing user: %s', 'waza-booking'), $user->user_login)
+            ]);
+            return;
+        }
+        
+        // Create new WordPress user
+        $username = sanitize_user(strtolower(str_replace(' ', '_', $post->post_title)), true);
+        
+        // Ensure unique username
+        $base_username = $username;
+        $counter = 1;
+        while (username_exists($username)) {
+            $username = $base_username . '_' . $counter;
+            $counter++;
+        }
+        
+        // Generate random password (user will set via reset link)
+        $password = wp_generate_password(20, true, true);
+        
+        $user_id = wp_create_user($username, $password, $email);
+        
+        if (is_wp_error($user_id)) {
+            wp_send_json_error($user_id->get_error_message());
+        }
+        
+        // Link instructor to user
+        update_post_meta($instructor_id, '_waza_user_id', $user_id);
+        
+        // Copy meta fields for new system
+        $experience = get_post_meta($instructor_id, '_waza_experience', true);
+        if ($experience && !get_post_meta($instructor_id, '_waza_experience_years', true)) {
+            update_post_meta($instructor_id, '_waza_experience_years', $experience);
+        }
+        
+        // Get activity type from assigned activities
+        global $wpdb;
+        $activity = $wpdb->get_row($wpdb->prepare("
+            SELECT p.post_title
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+            WHERE p.post_type = 'waza_activity'
+            AND pm.meta_key = '_waza_instructor'
+            AND pm.meta_value = %d
+            LIMIT 1
+        ", $instructor_id));
+        
+        if ($activity && !get_post_meta($instructor_id, '_waza_activity_type', true)) {
+            update_post_meta($instructor_id, '_waza_activity_type', $activity->post_title);
+        }
+        
+        // Send welcome email with password reset link
+        $reset_key = get_password_reset_key(get_userdata($user_id));
+        
+        if (!is_wp_error($reset_key)) {
+            $reset_url = network_site_url("wp-login.php?action=rp&key=$reset_key&login=" . rawurlencode($username), 'login');
+            $dashboard_url = home_url('/instructor-dashboard/');
+            
+            // Use email template manager
+            $email_template_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('email_template');
+            
+            if ($email_template_manager) {
+                $email_template_manager->send_email('welcome_email', $email, [
+                    'user_name' => $post->post_title,
+                    'user_first_name' => $post->post_title,
+                    'reset_url' => $reset_url,
+                    'dashboard_url' => $dashboard_url,
+                    'username' => $username,
+                    'user_email' => $email
+                ]);
+            }
+        }
+        
+        wp_send_json_success([
+            'message' => sprintf(__('User created and linked: %s. Welcome email sent to %s', 'waza-booking'), $username, $email)
+        ]);
+    }
+    
+    /**
+     * AJAX handler to get instructor details
+     */
+    public function ajax_get_instructor_details() {
+        check_ajax_referer('waza_instructor_details', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Permission denied', 'waza-booking'));
+        }
+        
+        $instructor_id = intval($_POST['instructor_id']);
+        $post = get_post($instructor_id);
+        
+        if (!$post || $post->post_type !== 'waza_instructor') {
+            wp_send_json_error(__('Invalid instructor ID', 'waza-booking'));
+        }
+        
+        $skills_terms = wp_get_object_terms($instructor_id, 'waza_instructor_specialty');
+        $skills = !empty($skills_terms) ? implode(', ', wp_list_pluck($skills_terms, 'name')) : '';
+        
+        $data = [
+            'name' => get_the_title($instructor_id),
+            'email' => get_post_meta($instructor_id, '_waza_email', true),
+            'phone' => get_post_meta($instructor_id, '_waza_phone', true),
+            'bio' => get_post_meta($instructor_id, '_waza_bio', true),
+            'experience' => get_post_meta($instructor_id, '_waza_experience', true),
+            'certifications' => get_post_meta($instructor_id, '_waza_certifications', true),
+            'rating' => get_post_meta($instructor_id, '_waza_rating', true),
+            'hourly_rate' => get_post_meta($instructor_id, '_waza_hourly_rate', true),
+            'social_links' => get_post_meta($instructor_id, '_waza_social_links', true),
+            'email_verified' => get_post_meta($instructor_id, '_waza_email_verified', true) === '1',
+            'status' => $post->post_status,
+            'skills' => $skills
+        ];
+        
+        wp_send_json_success($data);
     }
 }

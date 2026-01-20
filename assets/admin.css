@@ -199,6 +199,20 @@
     color: #4B5563;
 }
 
+.status-badge.pending {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.status-badge.cancellation {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.cancellation-request {
+    background-color: #FFF7ED;
+}
+
 /* Card Layouts */
 .waza-card {
     background: var(--waza-surface);

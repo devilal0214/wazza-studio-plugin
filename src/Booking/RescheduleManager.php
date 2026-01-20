@@ -89,7 +89,7 @@ class RescheduleManager {
             FROM {$wpdb->prefix}waza_slots s
             WHERE s.activity_id = %d 
                 AND s.start_datetime > NOW()
-                AND s.status = 'available'
+                AND s.status = 'active'
                 AND (s.capacity - s.booked_count) >= %d
             ORDER BY s.start_datetime ASC
             LIMIT 20

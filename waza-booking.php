@@ -30,9 +30,9 @@ define('WAZA_BOOKING_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WAZA_BOOKING_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WAZA_BOOKING_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
-// Require Composer autoloader if it exists
-if (file_exists(WAZA_BOOKING_PLUGIN_DIR . 'vendor/autoload.php')) {
-    require_once WAZA_BOOKING_PLUGIN_DIR . 'vendor/autoload.php';
+// Require Composer autoloader if it exists (with WordPress compatibility)
+if (file_exists(WAZA_BOOKING_PLUGIN_DIR . 'includes/vendor-loader.php')) {
+    require_once WAZA_BOOKING_PLUGIN_DIR . 'includes/vendor-loader.php';
 }
 
 // Require custom autoloader for plugin classes
