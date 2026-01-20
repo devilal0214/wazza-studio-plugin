@@ -759,15 +759,15 @@ class SlotManager {
                 'status' => 'active'
             ],
             [
-                '%d',
-                $instructor_id ? '%d' : '%s',
-                '%s',
-                '%s',
-                '%d',
-                '%f',
-                '%s',
-                '%s',
-                '%s'
+                '%d',  // activity_id
+                '%d',  // instructor_id (fixed: always %d, even if NULL)
+                '%s',  // start_datetime
+                '%s',  // end_datetime
+                '%d',  // capacity
+                '%f',  // price
+                '%s',  // location
+                '%s',  // notes
+                '%s'   // status
             ]
         );
         
