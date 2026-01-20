@@ -42,7 +42,7 @@ class InstructorFrontend {
      * Enqueue frontend scripts
      */
     public function enqueue_scripts() {
-        if (is_page() && (has_shortcode(get_post()->post_content, 'waza_instructor_register') || 
+        if (is_page() && (has_shortcode(get_post()->post_content, 'waza_instructor_registration') || 
                          has_shortcode(get_post()->post_content, 'waza_instructor_dashboard'))) {
             
             wp_enqueue_style('waza-instructor', WAZA_BOOKING_PLUGIN_URL . 'assets/instructor.css', [], '2.5.0');

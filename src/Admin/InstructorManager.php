@@ -382,6 +382,10 @@ class InstructorManager {
             wp_send_json_error($user_id->get_error_message());
         }
         
+        // Assign waza_instructor role (instead of default subscriber)
+        $user = new \WP_User($user_id);
+        $user->set_role('waza_instructor');
+        
         // Link instructor to user
         update_post_meta($instructor_id, '_waza_user_id', $user_id);
         
