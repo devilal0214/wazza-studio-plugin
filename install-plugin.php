@@ -235,13 +235,19 @@ $pages = [
     [
         'title' => 'Activities',
         'slug' => 'activities',
-        'content' => '<!-- wp:shortcode -->[waza_activities_list]<!-- /wp:shortcode -->',
+        'content' => '<!-- wp:shortcode -->[waza_activity_browser]<!-- /wp:shortcode -->',
         'template' => ''
     ],
     [
         'title' => 'Announcements',
         'slug' => 'announcements',
         'content' => '<!-- wp:shortcode -->[waza_announcements]<!-- /wp:shortcode -->',
+        'template' => ''
+    ],
+    [
+        'title' => 'QR Scanner',
+        'slug' => 'qr-scanner',
+        'content' => '<!-- wp:shortcode -->[waza_qr_scanner]<!-- /wp:shortcode -->',
         'template' => ''
     ],
     [

@@ -31,6 +31,7 @@ class ShortcodeManager {
         add_shortcode('waza_activities_list', [$this, 'activities_list_shortcode']);
         add_shortcode('waza_activity_grid', [$this, 'activity_grid_shortcode']);
         add_shortcode('waza_featured_activities', [$this, 'featured_activities_shortcode']);
+        add_shortcode('waza_activity_browser', [$this, 'activity_browser_shortcode']);
         
         // Calendar and booking shortcodes
         add_shortcode('waza_booking_calendar', [$this, 'booking_calendar_shortcode']);
@@ -727,7 +728,7 @@ class ShortcodeManager {
     public function instructor_registration_shortcode($atts) {
         if (class_exists('WazaBooking\Frontend\InstructorFrontend')) {
             $instructor_frontend = new \WazaBooking\Frontend\InstructorFrontend();
-            return $instructor_frontend->instructor_register_shortcode($atts);
+            return $instructor_frontend->registration_form($atts);
         }
         return '<p>' . __('Instructor registration is not available.', 'waza-booking') . '</p>';
     }
@@ -738,7 +739,7 @@ class ShortcodeManager {
     public function instructor_dashboard_shortcode($atts) {
         if (class_exists('WazaBooking\Frontend\InstructorFrontend')) {
             $instructor_frontend = new \WazaBooking\Frontend\InstructorFrontend();
-            return $instructor_frontend->instructor_dashboard_shortcode($atts);
+            return $instructor_frontend->instructor_dashboard($atts);
         }
         return '<p>' . __('Instructor dashboard is not available.', 'waza-booking') . '</p>';
     }
@@ -795,5 +796,18 @@ class ShortcodeManager {
         ob_start();
         include WAZA_BOOKING_PLUGIN_DIR . 'templates/studio-rental.php';
         return ob_get_clean();
+    }
+    
+    /**
+     * Activity browser shortcode
+     */
+    public function activity_browser_shortcode($atts) {
+        if (class_exists('WazaBooking\\Activity\\ActivityBrowserManager')) {
+            $browser_manager = new \WazaBooking\Activity\ActivityBrowserManager();
+            return $browser_manager->activity_browser_shortcode($atts);
+        }
+        
+        // Fallback to activities list
+        return $this->activities_list_shortcode($atts);
     }
 }
