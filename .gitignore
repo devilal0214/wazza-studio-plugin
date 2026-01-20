@@ -12,9 +12,11 @@ seed*.php
 regenerate-vendor.php
 add-rental-column.php
 install-plugin.php
+clean-autoload.ps1
 
-# Composer
-vendor/
+# Composer - vendor folder is INCLUDED for deployment
+# vendor/ folder contains critical autoload fixes
+# DO NOT add vendor/ to .gitignore
 composer.lock
 
 # Node modules (if any)
