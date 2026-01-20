@@ -317,7 +317,7 @@ class RentalSettingsManager {
                                         <td>
                                             <textarea name="<?php echo self::OPTION_NAME; ?>[rental_types][<?php echo esc_attr($key); ?>][includes]" 
                                                       rows="3" 
-                                                      class="large-text"><?php echo esc_textarea($type['includes']); ?></textarea>
+                                                      class="large-text"><?php echo esc_textarea($type['includes'] ?? ''); ?></textarea>
                                             <p class="description"><?php esc_html_e('Comma-separated list of included items', 'waza-booking'); ?></p>
                                         </td>
                                     </tr>
@@ -326,7 +326,7 @@ class RentalSettingsManager {
                                         <td>
                                             <textarea name="<?php echo self::OPTION_NAME; ?>[rental_types][<?php echo esc_attr($key); ?>][excludes]" 
                                                       rows="3" 
-                                                      class="large-text"><?php echo esc_textarea($type['excludes']); ?></textarea>
+                                                      class="large-text"><?php echo esc_textarea($type['excludes'] ?? ''); ?></textarea>
                                             <p class="description"><?php esc_html_e('Comma-separated list of excluded items', 'waza-booking'); ?></p>
                                         </td>
                                     </tr>

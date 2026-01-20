@@ -45,8 +45,20 @@ class ShortcodeManager {
         add_shortcode('waza_activity_search', [$this, 'activity_search_shortcode']);
         add_shortcode('waza_activity_filters', [$this, 'activity_filters_shortcode']);
         
-        // My Bookings
+        // User account shortcodes
+        add_shortcode('waza_user_login', [$this, 'user_login_shortcode']);
         add_shortcode('waza_my_bookings', [$this, 'my_bookings_shortcode']);
+        add_shortcode('waza_my_account', [$this, 'my_account_shortcode']);
+        
+        // Instructor shortcodes
+        add_shortcode('waza_instructor_registration', [$this, 'instructor_registration_shortcode']);
+        add_shortcode('waza_instructor_dashboard', [$this, 'instructor_dashboard_shortcode']);
+        
+        // Announcements
+        add_shortcode('waza_announcements', [$this, 'announcements_shortcode']);
+        
+        // Studio Rental
+        add_shortcode('waza_studio_rental', [$this, 'studio_rental_shortcode']);
     }
     
     /**
@@ -680,6 +692,108 @@ class ShortcodeManager {
         </div>
         <?php
         
+        return ob_get_clean();
+    }
+    
+    /**
+     * User login shortcode
+     */
+    public function user_login_shortcode($atts) {
+        if (is_user_logged_in()) {
+            wp_safe_redirect(home_url('/my-bookings'));
+            exit;
+        }
+        
+        // Use UserAccountManager's login form
+        $account_manager = new \WazaBooking\User\UserAccountManager();
+        return $account_manager->login_form_shortcode($atts);
+    }
+    
+    /**
+     * My account shortcode
+     */
+    public function my_account_shortcode($atts) {
+        if (!is_user_logged_in()) {
+            return '<p>' . __('Please login to view your account.', 'waza-booking') . ' <a href="' . home_url('/login') . '">' . __('Login', 'waza-booking') . '</a></p>';
+        }
+        
+        $account_manager = new \WazaBooking\User\UserAccountManager();
+        return $account_manager->user_dashboard_shortcode($atts);
+    }
+    
+    /**
+     * Instructor registration shortcode
+     */
+    public function instructor_registration_shortcode($atts) {
+        if (class_exists('WazaBooking\Frontend\InstructorFrontend')) {
+            $instructor_frontend = new \WazaBooking\Frontend\InstructorFrontend();
+            return $instructor_frontend->instructor_register_shortcode($atts);
+        }
+        return '<p>' . __('Instructor registration is not available.', 'waza-booking') . '</p>';
+    }
+    
+    /**
+     * Instructor dashboard shortcode
+     */
+    public function instructor_dashboard_shortcode($atts) {
+        if (class_exists('WazaBooking\Frontend\InstructorFrontend')) {
+            $instructor_frontend = new \WazaBooking\Frontend\InstructorFrontend();
+            return $instructor_frontend->instructor_dashboard_shortcode($atts);
+        }
+        return '<p>' . __('Instructor dashboard is not available.', 'waza-booking') . '</p>';
+    }
+    
+    /**
+     * Announcements shortcode
+     */
+    public function announcements_shortcode($atts) {
+        $atts = shortcode_atts([
+            'limit' => 10,
+            'show_expired' => 'no'
+        ], $atts);
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'waza_announcements';
+        
+        $query = "SELECT * FROM $table WHERE 1=1";
+        
+        if ($atts['show_expired'] !== 'yes') {
+            $query .= " AND (expiry_date IS NULL OR expiry_date >= NOW())";
+        }
+        
+        $query .= " AND status = 'active' ORDER BY created_at DESC LIMIT " . intval($atts['limit']);
+        
+        $announcements = $wpdb->get_results($query);
+        
+        ob_start();
+        ?>
+        <div class="waza-announcements-list">
+            <?php if ($announcements) : ?>
+                <?php foreach ($announcements as $announcement) : ?>
+                    <div class="waza-announcement-item announcement-<?php echo esc_attr($announcement->type); ?>">
+                        <div class="announcement-header">
+                            <h3><?php echo esc_html($announcement->title); ?></h3>
+                            <span class="announcement-date"><?php echo date_i18n(get_option('date_format'), strtotime($announcement->created_at)); ?></span>
+                        </div>
+                        <div class="announcement-content">
+                            <?php echo wp_kses_post($announcement->content); ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <p><?php esc_html_e('No announcements at this time.', 'waza-booking'); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+    
+    /**
+     * Studio rental shortcode
+     */
+    public function studio_rental_shortcode($atts) {
+        ob_start();
+        include WAZA_BOOKING_PLUGIN_DIR . 'templates/studio-rental.php';
         return ob_get_clean();
     }
 }

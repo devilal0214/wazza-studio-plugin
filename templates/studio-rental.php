@@ -29,8 +29,8 @@ $currency_symbol = $settings['currency_symbol'] ?? '₹';
         <?php foreach ($rental_types as $type_key => $type) : ?>
             <div class="pricing-card <?php echo esc_attr($type_key); ?>">
                 <div class="pricing-header">
-                    <span class="pricing-icon"><?php echo esc_html($type['icon']); ?></span>
-                    <h3><?php echo esc_html(strtoupper($type['label'])); ?></h3>
+                    <span class="pricing-icon"><?php echo esc_html($type['icon'] ?? '🎨'); ?></span>
+                    <h3><?php echo esc_html(strtoupper($type['label'] ?? ucfirst($type_key))); ?></h3>
                 </div>
                 <div class="pricing-rates">
                     <?php foreach ($durations as $dur_key => $duration) : ?>

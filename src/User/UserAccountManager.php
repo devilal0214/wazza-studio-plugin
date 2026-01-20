@@ -371,13 +371,14 @@ class UserAccountManager {
         }
         
         // Check user role and determine redirect
-        $redirect_url = home_url();
+        $redirect_url = home_url('/my-bookings'); // Default redirect to my-bookings
         
         if (in_array('waza_instructor', $user->roles)) {
             $redirect_url = home_url('/instructor-dashboard');
-        } elseif (in_array('waza_student', $user->roles)) {
-            $redirect_url = home_url('/my-account');
+        } elseif (in_array('administrator', $user->roles)) {
+            $redirect_url = admin_url();
         }
+        // Students and all other users go to my-bookings
         
         // Log login activity
         do_action('waza_log_activity', 'user_login', 'user', $user->ID, [
