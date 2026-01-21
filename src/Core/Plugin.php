@@ -105,6 +105,13 @@ final class Plugin {
     private $payment_manager;
     
     /**
+     * Booking payment handler
+     * 
+     * @var BookingPaymentHandler
+     */
+    private $booking_payment_handler;
+    
+    /**
      * Checkout page handler
      * 
      * @var \WazaBooking\Payment\CheckoutPageHandler

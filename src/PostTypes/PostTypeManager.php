@@ -66,16 +66,16 @@ class PostTypeManager {
             'rewrite'             => ['slug' => 'activities'],
             'capability_type'     => 'post',
             'capabilities'        => [
-                'edit_post'          => 'edit_waza_slots',
-                'read_post'          => 'read',  // Anyone can read
-                'delete_post'        => 'edit_waza_slots',
-                'edit_posts'         => 'edit_waza_slots',
-                'edit_others_posts'  => 'manage_waza',
-                'delete_posts'       => 'manage_waza',
-                'publish_posts'      => 'edit_waza_slots',
-                'read_private_posts' => 'manage_waza'
+                'edit_post'          => 'edit_posts',
+                'read_post'          => 'read',
+                'delete_post'        => 'delete_posts',
+                'edit_posts'         => 'edit_posts',
+                'edit_others_posts'  => 'edit_others_posts',
+                'delete_posts'       => 'delete_posts',
+                'publish_posts'      => 'publish_posts',
+                'read_private_posts' => 'read_private_posts'
             ],
-            'map_meta_cap'        => true,  // IMPORTANT: Map to built-in caps for reading
+            'map_meta_cap'        => true,
             'has_archive'         => true,
             'hierarchical'        => false,
             'menu_position'       => null,
