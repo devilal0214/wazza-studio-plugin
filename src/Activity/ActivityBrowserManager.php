@@ -208,7 +208,7 @@ class ActivityBrowserManager {
             'category' => $this->get_activity_category($activity_id),
             'rating' => get_post_meta($activity_id, '_waza_rating', true) ?: '0',
             'booking_count' => $booking_count,
-            'permalink' => add_query_arg('activity_id', $activity_id, home_url('/slots/'))
+            'permalink' => add_query_arg('activity_id', $activity_id, home_url('/activity-booking/'))
         ];
     }
     

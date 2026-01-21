@@ -115,7 +115,7 @@ if ($activities_query->post_count === 0) {
 
                         <p class="activity-excerpt"><?php echo wp_trim_words(get_the_content(), 15); ?></p>
 
-                        <a href="<?php echo esc_url(add_query_arg('activity_id', $activity_id, home_url('/slots/'))); ?>" 
+                        <a href="<?php echo esc_url(add_query_arg('activity_id', $activity_id, home_url('/activity-booking/'))); ?>" 
                            class="waza-btn waza-btn-primary waza-btn-block activity-book-btn">
                             <?php esc_html_e('Book Now', 'waza-booking'); ?>
                         </a>
