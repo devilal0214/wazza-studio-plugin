@@ -292,6 +292,7 @@ class AjaxHandler {
                     'payment_method' => $payment_method,
                     'customer_name' => $customer_name,
                     'customer_email' => $customer_email,
+                    'customer_phone' => $customer_phone,
                     'activity_name' => $activity->post_title ?? 'Activity Booking'
                 ]);
             } else {

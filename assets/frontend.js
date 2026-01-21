@@ -798,6 +798,7 @@
         const amount = response.total_amount;
         const customerName = response.customer_name || $('#customer_name').val() || '';
         const customerEmail = response.customer_email || $('#customer_email').val() || '';
+        const customerPhone = response.customer_phone || $('#customer_phone').val() || '';
         
         // Build checkout URL
         const checkoutUrl = waza_frontend.home_url + '/checkout/?' + 
@@ -805,7 +806,8 @@
             '&amount=' + amount + 
             '&type=booking' +
             '&customer_name=' + encodeURIComponent(customerName) +
-            '&customer_email=' + encodeURIComponent(customerEmail);
+            '&customer_email=' + encodeURIComponent(customerEmail) +
+            '&customer_phone=' + encodeURIComponent(customerPhone);
         
         console.log('Redirecting to checkout:', checkoutUrl);
         

@@ -49,6 +49,7 @@ class CheckoutPageHandler {
         $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
         $customer_name = isset($_GET['customer_name']) ? sanitize_text_field($_GET['customer_name']) : '';
         $customer_email = isset($_GET['customer_email']) ? sanitize_email($_GET['customer_email']) : '';
+        $customer_phone = isset($_GET['customer_phone']) ? sanitize_text_field($_GET['customer_phone']) : '';
         
         if (!$amount || (!$booking_id && !$rental_id && !$temp_rental_id)) {
             echo '<div class="waza-checkout-error">';
@@ -192,7 +193,8 @@ class CheckoutPageHandler {
                 amount: <?php echo floatval($amount); ?>,
                 type: '<?php echo esc_js($type); ?>',
                 customer_name: '<?php echo esc_js($customer_name); ?>',
-                customer_email: '<?php echo esc_js($customer_email); ?>'
+                customer_email: '<?php echo esc_js($customer_email); ?>',
+                customer_phone: '<?php echo esc_js($customer_phone); ?>'
             };
             
             $('.pay-btn').on('click', function() {
@@ -215,7 +217,8 @@ class CheckoutPageHandler {
                         temp_rental_id: data.temp_rental_id,
                         type: data.type,
                         customer_name: data.customer_name,
-                        customer_email: data.customer_email
+                        customer_email: data.customer_email,
+                        customer_phone: data.customer_phone
                     },
                     success: function(response) {
                         if (response.success) {
@@ -285,7 +288,8 @@ class CheckoutPageHandler {
                     },
                     prefill: {
                         name: paymentData.customer_name,
-                        email: paymentData.customer_email
+                        email: paymentData.customer_email,
+                        contact: paymentData.customer_phone
                     },
                     theme: {
                         color: '#2271b1'
