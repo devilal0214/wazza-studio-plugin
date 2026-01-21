@@ -227,9 +227,9 @@ class AjaxHandler {
             // Create booking record (with pending status)
             $booking_data = [
                 'user_id' => $user_id ?: null,
-                'activity_id' => $activity_id,
+                'activity_id' => $activity_id,  // Add activity_id
                 'slot_id' => $slot_id,
-                'quantity' => $quantity,
+                'quantity' => $quantity,  // Add quantity
                 'attendees_count' => $quantity,
                 'total_amount' => $total_amount,
                 'discount_amount' => $discount_amount,
@@ -948,13 +948,14 @@ class AjaxHandler {
                     <div class="waza-form-group waza-form-col-half">
                         <label for="customer_phone">Phone <span class="required">*</span></label>
                         <div class="waza-phone-wrapper">
-                            <div class="waza-phone-input">
-                                <select name="customer_phone_country" class="waza-country-select">
+                            <div class="waza-phone-input" style="display: flex; gap: 8px;">
+                                <select name="customer_phone_country" class="waza-country-select" style="width: 90px; flex-shrink: 0;">
                                     <option value="+91" selected>🇮🇳 +91</option>
                                     <option value="+1">🇺🇸 +1</option>
                                     <option value="+44">🇬🇧 +44</option>
                                 </select>
                                 <input type="tel" name="customer_phone" id="customer_phone" required
+                                       style="flex: 1;"
                                        value="<?php echo esc_attr($user_info['phone']); ?>"
                                        placeholder="9876543210">
                             </div>
