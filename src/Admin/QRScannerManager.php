@@ -413,7 +413,14 @@ class QRScannerManager {
         }
         
         // Display booking details
-        function displayBookingDetails(booking) {
+        function displayBookingDetails(data) {
+            // Handle both nested structure (AttendanceScanner) and flat structure (QRScannerManager)
+            const booking = data.booking || data;
+            const user = data.user || {};
+            
+            // Phone number fallback: user.phone > booking.user_phone > 'Not provided'
+            const phoneNumber = user.phone || booking.user_phone || 'Not provided';
+            
             // Insert result after the scanner div, not in separate result area
             const scannerSection = document.querySelector('.scanner-section');
             let resultDiv = document.getElementById('scan-result');
@@ -449,7 +456,7 @@ class QRScannerManager {
                         </div>
                         <div class="info-item">
                             <div class="info-label">Phone</div>
-                            <div class="info-value">${booking.user_phone && booking.user_phone !== 'N/A' ? booking.user_phone : 'Not provided'}</div>
+                            <div class="info-value">${phoneNumber && phoneNumber !== 'N/A' ? phoneNumber : 'Not provided'}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Date</div>

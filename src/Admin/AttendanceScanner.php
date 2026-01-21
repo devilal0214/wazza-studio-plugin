@@ -299,11 +299,11 @@ class AttendanceScanner {
             'user' => $user ? [
                 'display_name' => $user->display_name,
                 'email' => $user->user_email,
-                'phone' => get_user_meta($user->ID, 'phone', true)
+                'phone' => get_user_meta($user->ID, 'phone', true) ?: ($booking->user_phone ?: '')
             ] : [
                 'display_name' => $booking->user_name,
                 'email' => $booking->user_email,
-                'phone' => $booking->user_phone
+                'phone' => $booking->user_phone ?: ''
             ],
             'attendance' => $attendance,
             'has_checked_in' => !empty($attendance->check_in_time),
