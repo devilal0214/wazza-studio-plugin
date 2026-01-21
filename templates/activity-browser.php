@@ -112,27 +112,10 @@ if ($activities_query->post_count === 0) {
                     
                     <div class="activity-content">
                         <h3 class="activity-title"><?php the_title(); ?></h3>
-                        
-                        <div class="activity-meta">
-                            <span class="activity-rating">
-                                ⭐ <?php echo number_format($rating, 1); ?>
-                            </span>
-                            <span class="activity-bookings">
-                                <?php echo $booking_count; ?> <?php esc_html_e('bookings', 'waza-booking'); ?>
-                            </span>
-                        </div>
 
                         <p class="activity-excerpt"><?php echo wp_trim_words(get_the_content(), 15); ?></p>
-                        
-                        <div class="activity-details">
-                            <?php if ($duration) : ?>
-                                <span class="detail-item">
-                                    <span class="icon">⏱️</span> <?php echo esc_html($duration); ?> <?php esc_html_e('mins', 'waza-booking'); ?>
-                                </span>
-                            <?php endif; ?>
-                        </div>
 
-                        <a href="<?php echo esc_url(add_query_arg('activity_id', $activity_id, home_url('/activity-booking/'))); ?>" 
+                        <a href="<?php echo esc_url(add_query_arg('activity_id', $activity_id, home_url('/slots/'))); ?>" 
                            class="waza-btn waza-btn-primary waza-btn-block activity-book-btn">
                             <?php esc_html_e('Book Now', 'waza-booking'); ?>
                         </a>
@@ -244,14 +227,7 @@ jQuery(document).ready(function($) {
                     </div>
                     <div class="activity-content">
                         <h3 class="activity-title">${activity.title}</h3>
-                        <div class="activity-meta">
-                            <span class="activity-rating">⭐ ${parseFloat(activity.rating).toFixed(1)}</span>
-                            <span class="activity-bookings">${activity.booking_count} bookings</span>
-                        </div>
                         <p class="activity-excerpt">${activity.description}</p>
-                        <div class="activity-details">
-                            ${activity.duration ? '<span class="detail-item"><span class="icon">⏱️</span> ' + activity.duration + ' mins</span>' : ''}
-                        </div>
                         <a href="${activity.permalink}" class="waza-btn waza-btn-primary waza-btn-block activity-book-btn">
                             <?php esc_html_e('Book Now', 'waza-booking'); ?>
                         </a>

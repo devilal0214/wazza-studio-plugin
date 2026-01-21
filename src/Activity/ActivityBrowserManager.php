@@ -123,7 +123,7 @@ class ActivityBrowserManager {
      * Filter activities based on criteria
      */
     public function filter_activities() {
-        check_ajax_referer('waza_booking_nonce', 'nonce');
+        // No nonce check - this is a public filter function
         
         $category = sanitize_text_field($_POST['category'] ?? '');
         $search = sanitize_text_field($_POST['search'] ?? '');
@@ -151,12 +151,12 @@ class ActivityBrowserManager {
         // Sorting
         switch ($sort) {
             case 'price_low':
-                $args['meta_key'] = '_waza_activity_price';
+                $args['meta_key'] = '_waza_price';
                 $args['orderby'] = 'meta_value_num';
                 $args['order'] = 'ASC';
                 break;
             case 'price_high':
-                $args['meta_key'] = '_waza_activity_price';
+                $args['meta_key'] = '_waza_price';
                 $args['orderby'] = 'meta_value_num';
                 $args['order'] = 'DESC';
                 break;
@@ -165,8 +165,7 @@ class ActivityBrowserManager {
                 $args['order'] = 'DESC';
                 break;
             default: // popular
-                $args['meta_key'] = '_waza_booking_count';
-                $args['orderby'] = 'meta_value_num';
+                $args['orderby'] = 'date';
                 $args['order'] = 'DESC';
         }
         
@@ -204,12 +203,12 @@ class ActivityBrowserManager {
             'title' => get_the_title($activity_id),
             'description' => wp_trim_words(get_the_content(null, false, $activity_id), 20),
             'thumbnail' => get_the_post_thumbnail_url($activity_id, 'medium'),
-            'price' => get_post_meta($activity_id, '_waza_activity_price', true),
-            'duration' => get_post_meta($activity_id, '_waza_activity_duration', true),
+            'price' => get_post_meta($activity_id, '_waza_price', true),
+            'duration' => get_post_meta($activity_id, '_waza_duration', true),
             'category' => $this->get_activity_category($activity_id),
-            'rating' => get_post_meta($activity_id, '_waza_activity_rating', true) ?: '0',
+            'rating' => get_post_meta($activity_id, '_waza_rating', true) ?: '0',
             'booking_count' => $booking_count,
-            'permalink' => add_query_arg('activity_id', $activity_id, home_url('/activity-booking/'))
+            'permalink' => add_query_arg('activity_id', $activity_id, home_url('/slots/'))
         ];
     }
     
