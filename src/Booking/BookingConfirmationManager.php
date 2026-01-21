@@ -136,11 +136,9 @@ class BookingConfirmationManager {
         $qr_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('qr');
         $qr_image = false;
         
-        // Convert UTC to site timezone for QR data
-        $qr_start_dt = new \DateTime($slot->start_datetime, new \DateTimeZone('UTC'));
-        $qr_start_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
-        $qr_end_dt = new \DateTime($slot->end_datetime, new \DateTimeZone('UTC'));
-        $qr_end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+        // Slots are stored in IST - no conversion needed
+        $qr_start_dt = new \DateTime($slot->start_datetime, new \DateTimeZone(wp_timezone_string()));
+        $qr_end_dt = new \DateTime($slot->end_datetime, new \DateTimeZone(wp_timezone_string()));
         
         // Generate comprehensive QR code data for admin verification and attendance
         $qr_data = [
@@ -208,9 +206,8 @@ class BookingConfirmationManager {
                         <span class="waza-detail-label"><?php _e('Date:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value">
                             <?php 
-                            // Convert UTC to site timezone
-                            $start_dt = new \DateTime($slot->start_datetime, new \DateTimeZone('UTC'));
-                            $start_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+                            // Slots are stored in IST - no conversion needed
+                            $start_dt = new \DateTime($slot->start_datetime, new \DateTimeZone(wp_timezone_string()));
                             echo $start_dt->format('F j, Y'); 
                             ?>
                         </span>
@@ -220,9 +217,8 @@ class BookingConfirmationManager {
                         <span class="waza-detail-label"><?php _e('Time:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value">
                             <?php 
-                            // Convert UTC to site timezone
-                            $end_dt = new \DateTime($slot->end_datetime, new \DateTimeZone('UTC'));
-                            $end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+                            // Slots are stored in IST - no conversion needed
+                            $end_dt = new \DateTime($slot->end_datetime, new \DateTimeZone(wp_timezone_string()));
                             echo $start_dt->format('g:i A');
                             echo ' – ';
                             echo $end_dt->format('g:i A');

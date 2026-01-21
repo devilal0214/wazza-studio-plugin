@@ -615,25 +615,30 @@ class QRScannerManager {
             wp_send_json_error(['message' => 'Invalid booking ID']);
         }
         
-        // Get booking details
+        // Get booking details with user info
         $booking = $wpdb->get_row($wpdb->prepare("
             SELECT b.*, s.start_datetime, s.end_datetime, s.activity_id,
-                   p.post_title as activity_name
+                   p.post_title as activity_name,
+                   u.meta_value as user_phone_meta
             FROM {$wpdb->prefix}waza_bookings b
             LEFT JOIN {$wpdb->prefix}waza_slots s ON b.slot_id = s.id
             LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            LEFT JOIN {$wpdb->usermeta} u ON b.user_id = u.user_id AND u.meta_key = 'billing_phone'
             WHERE b.id = %d
         ", $booking_id));
+        
+        // Ensure phone number is available from booking or user meta
+        if (empty($booking->user_phone) && !empty($booking->user_phone_meta)) {
+            $booking->user_phone = $booking->user_phone_meta;
+        }
         
         if (!$booking) {
             wp_send_json_error(['message' => 'Booking not found']);
         }
         
-        // Convert UTC datetime to site timezone (Asia/Kolkata)
-        $start_dt = new \DateTime($booking->start_datetime, new \DateTimeZone('UTC'));
-        $start_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
-        $end_dt = new \DateTime($booking->end_datetime, new \DateTimeZone('UTC'));
-        $end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+        // Slots are stored in IST (Asia/Kolkata) - no conversion needed
+        $start_dt = new \DateTime($booking->start_datetime, new \DateTimeZone(wp_timezone_string()));
+        $end_dt = new \DateTime($booking->end_datetime, new \DateTimeZone(wp_timezone_string()));
         
         // Check if slot is today
         $slot_date = $start_dt->format('Y-m-d');
