@@ -25,6 +25,7 @@ class QRScannerManager {
         // AJAX handlers
         add_action('wp_ajax_waza_verify_qr', [$this, 'verify_qr_code']);
         add_action('wp_ajax_waza_mark_attendance', [$this, 'mark_attendance']);
+        add_action('wp_ajax_waza_get_scanner_stats', [$this, 'get_scanner_stats']);
     }
     
     /**
@@ -65,6 +66,22 @@ class QRScannerManager {
         <div class="waza-qr-scanner-container">
             <h2><?php _e('Scan QR Code for Verification', 'waza-booking'); ?></h2>
             
+            <!-- Today's Stats -->
+            <div class="scanner-stats">
+                <div class="stat-card">
+                    <h3 id="total-checkins">0</h3>
+                    <p>Total Check-ins</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="total-checkouts">0</h3>
+                    <p>Total Check-outs</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="currently-active">0</h3>
+                    <p>Currently Active</p>
+                </div>
+            </div>
+            
             <div class="scanner-section">
                 <div id="qr-reader" style="width: 100%; max-width: 600px; margin: 0 auto;"></div>
                 
@@ -88,6 +105,34 @@ class QRScannerManager {
             max-width: 800px;
             margin: 40px auto;
             padding: 20px;
+        }
+        
+        .scanner-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 36px;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+        
+        .stat-card p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
         }
         
         .scanner-section {
@@ -272,8 +317,8 @@ class QRScannerManager {
         function onScanSuccess(decodedText, decodedResult) {
             console.log('QR Code scanned:', decodedText);
             
-            // Stop scanning
-            html5QrCode.stop();
+            // Don't stop scanner - keep it running
+            // html5QrCode.stop();
             
             // Parse QR data
             try {
@@ -369,9 +414,22 @@ class QRScannerManager {
         
         // Display booking details
         function displayBookingDetails(booking) {
-            const resultDiv = document.getElementById('scan-result');
-            const detailsDiv = document.getElementById('booking-details');
-            const actionsDiv = document.getElementById('scan-actions');
+            // Insert result after the scanner div, not in separate result area
+            const scannerSection = document.querySelector('.scanner-section');
+            let resultDiv = document.getElementById('scan-result');
+            
+            // If result div doesn't exist after scanner, create it
+            if (!resultDiv || !scannerSection.nextElementSibling || scannerSection.nextElementSibling.id !== 'scan-result') {
+                resultDiv = document.createElement('div');
+                resultDiv.id = 'scan-result';
+                resultDiv.style.marginTop = '30px';
+                scannerSection.insertAdjacentElement('afterend', resultDiv);
+            }
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.id = 'booking-details';
+            const actionsDiv = document.createElement('div');
+            actionsDiv.id = 'scan-actions';
             
             detailsDiv.innerHTML = `
                 <div class="booking-card">
@@ -391,7 +449,7 @@ class QRScannerManager {
                         </div>
                         <div class="info-item">
                             <div class="info-label">Phone</div>
-                            <div class="info-value">${booking.user_phone || 'N/A'}</div>
+                            <div class="info-value">${booking.user_phone && booking.user_phone !== 'N/A' ? booking.user_phone : 'Not provided'}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Date</div>
@@ -419,9 +477,15 @@ class QRScannerManager {
                         </div>
                         <div class="info-item">
                             <div class="info-label">Amount Paid</div>
-                            <div class="info-value">₹${parseFloat(booking.total_amount).toFixed(2)}</div>
+                            <div class="info-value">₹${parseFloat(booking.total_amount || 0).toFixed(2)}</div>
                         </div>
                     </div>
+                    
+                    ${booking.validation_message ? `
+                    <div class="validation-notice" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-top: 20px; border-radius: 4px;">
+                        <p style="margin: 0; color: #856404; font-weight: 500;">${booking.validation_message}</p>
+                    </div>
+                    ` : ''}
                 </div>
             `;
             
@@ -430,12 +494,15 @@ class QRScannerManager {
                     <button class="waza-button waza-button-success" onclick="markAttendance(${booking.id})">
                         ✓ Mark Attendance
                     </button>
-                    <button class="waza-button waza-button-primary" onclick="restartScanner()">
+                    <button class="waza-button waza-button-primary" onclick="clearResult()">
                         Scan Another
                     </button>
                 </div>
             `;
             
+            resultDiv.innerHTML = '';
+            resultDiv.appendChild(detailsDiv);
+            resultDiv.appendChild(actionsDiv);
             resultDiv.style.display = 'block';
         }
         
@@ -479,6 +546,43 @@ class QRScannerManager {
                 onScanError
             );
         }
+        
+        // Clear result but keep scanner running
+        function clearResult() {
+            const resultDiv = document.getElementById('scan-result');
+            if (resultDiv) {
+                resultDiv.style.display = 'none';
+                resultDiv.innerHTML = '';
+            }
+            document.getElementById('manual-booking-code').value = '';
+        }
+        
+        // Load today's stats
+        function loadStats() {
+            fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'waza_get_scanner_stats',
+                    nonce: '<?php echo wp_create_nonce('waza_qr_verify'); ?>'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('total-checkins').textContent = data.data.total_checkins || 0;
+                    document.getElementById('total-checkouts').textContent = data.data.total_checkouts || 0;
+                    document.getElementById('currently-active').textContent = data.data.currently_active || 0;
+                }
+            })
+            .catch(error => console.error('Stats error:', error));
+        }
+        
+        // Load stats on page load and refresh every 30 seconds
+        loadStats();
+        setInterval(loadStats, 30000);
         </script>
         <?php
         
@@ -531,19 +635,33 @@ class QRScannerManager {
         $end_dt = new \DateTime($booking->end_datetime, new \DateTimeZone('UTC'));
         $end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
         
+        // Check if slot is today
+        $slot_date = $start_dt->format('Y-m-d');
+        $today = current_time('Y-m-d');
+        
+        // Add validation message if not today
+        $validation_message = '';
+        if ($slot_date < $today) {
+            $validation_message = '\u23f0 This booking is for ' . $start_dt->format('F j, Y') . ' (past date).';
+        } elseif ($slot_date > $today) {
+            $validation_message = '\u23f0 This booking is for ' . $start_dt->format('F j, Y') . ' (future date). Slot starts at: ' . $start_dt->format('g:i A');
+        }
+        
         wp_send_json_success([
             'id' => $booking->id,
             'booking_code' => 'WB-' . str_pad($booking->id, 5, '0', STR_PAD_LEFT),
-            'user_name' => $booking->user_name,
-            'user_email' => $booking->user_email,
-            'user_phone' => $booking->user_phone,
+            'user_name' => $booking->user_name ?: 'Guest',
+            'user_email' => $booking->user_email ?: 'No email',
+            'user_phone' => $booking->user_phone ?: '',
             'activity_name' => $booking->activity_name,
             'date' => $start_dt->format('F j, Y'),
-            'time' => $start_dt->format('g:i a') . ' - ' . $end_dt->format('g:i a'),
-            'quantity' => $booking->quantity,
+            'time' => $start_dt->format('g:i A') . ' - ' . $end_dt->format('g:i A'),
+            'quantity' => $booking->quantity ?: 1,
             'status' => $booking->booking_status,
             'payment_status' => $booking->payment_status,
-            'total_amount' => $booking->total_amount
+            'total_amount' => $booking->total_amount ?: 0,
+            'validation_message' => $validation_message,
+            'is_today' => $slot_date === $today
         ]);
     }
     
@@ -582,5 +700,47 @@ class QRScannerManager {
         }
         
         wp_send_json_success(['message' => 'Attendance marked successfully']);
+    }
+    
+    /**
+     * AJAX: Get today's scanner stats
+     */
+    public function get_scanner_stats() {
+        check_ajax_referer('waza_qr_verify', 'nonce');
+        
+        if (!current_user_can('manage_options') && !current_user_can('waza_instructor')) {
+            wp_send_json_error(['message' => 'Access denied']);
+        }
+        
+        global $wpdb;
+        $today = current_time('Y-m-d');
+        
+        // Total check-ins today
+        $total_checkins = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}waza_attendance
+            WHERE DATE(check_in_time) = %s
+            AND attendance_status = 'present'
+        ", $today));
+        
+        // Total check-outs today
+        $total_checkouts = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}waza_attendance
+            WHERE DATE(check_out_time) = %s
+            AND check_out_time IS NOT NULL
+        ", $today));
+        
+        // Currently active (checked in but not checked out)
+        $currently_active = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}waza_attendance
+            WHERE DATE(check_in_time) = %s
+            AND attendance_status = 'present'
+            AND (check_out_time IS NULL OR DATE(check_out_time) != %s)
+        ", $today, $today));
+        
+        wp_send_json_success([
+            'total_checkins' => intval($total_checkins),
+            'total_checkouts' => intval($total_checkouts),
+            'currently_active' => intval($currently_active)
+        ]);
     }
 }
