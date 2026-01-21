@@ -376,12 +376,9 @@ class AttendanceScanner {
             $can_mark_attendance = true;
         }
         
-        // Check attendance (using waza_attendance table with rental_id)
-        $attendance = $wpdb->get_row($wpdb->prepare("
-            SELECT * FROM {$wpdb->prefix}waza_attendance
-            WHERE rental_id = %d
-            LIMIT 1
-        ", $rental_id));
+        // Check attendance (rentals don't use waza_attendance table)
+        // Attendance tracking is only for slot bookings, not rentals
+        $attendance = null;
         
         // Generate rental code
         $rental->rental_code = 'WR-' . str_pad($rental->id, 5, '0', STR_PAD_LEFT);

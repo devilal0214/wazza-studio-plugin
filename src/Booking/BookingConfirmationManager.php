@@ -129,7 +129,8 @@ class BookingConfirmationManager {
         
         // Get activity details
         $activity = get_post($slot->activity_id);
-        $activity_location = get_post_meta($slot->activity_id, 'waza_activity_location', true) ?: __('To be announced', 'waza-booking');
+        // Get location from slot first, fallback to activity meta, then default
+        $activity_location = !empty($slot->location) ? $slot->location : (get_post_meta($slot->activity_id, 'waza_activity_location', true) ?: __('To be announced', 'waza-booking'));
         
         // Get QR code
         $qr_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('qr');
@@ -229,12 +230,10 @@ class BookingConfirmationManager {
                         </span>
                     </div>
                     
-                    <?php if ($activity_location): ?>
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Location:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value"><?php echo esc_html($activity_location); ?></span>
                     </div>
-                    <?php endif; ?>
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Participants:', 'waza-booking'); ?></span>
