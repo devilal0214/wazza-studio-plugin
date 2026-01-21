@@ -16,17 +16,24 @@ $categories = get_terms([
     'hide_empty' => true
 ]);
 
-// Get activities
+// Get activities - use simple query without capability checks
 $args = [
     'post_type' => 'waza_activity',
     'post_status' => 'publish',
     'posts_per_page' => $atts['per_page'] ?? 12,
-    'meta_key' => '_waza_booking_count',
-    'orderby' => 'meta_value_num',
-    'order' => 'DESC'
+    'orderby' => 'date',
+    'order' => 'DESC',
+    'suppress_filters' => true  // Important: bypass capability filters
 ];
 
 $activities_query = new WP_Query($args);
+
+// Debug: Log query details
+error_log('Activity Browser Query - Found posts: ' . $activities_query->found_posts);
+error_log('Activity Browser Query - Post count: ' . $activities_query->post_count);
+if ($activities_query->post_count === 0) {
+    error_log('Activity Browser Query - SQL: ' . $activities_query->request);
+}
 ?>
 
 <div class="waza-activity-browser">

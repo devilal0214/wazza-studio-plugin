@@ -67,7 +67,7 @@ class PostTypeManager {
             'capability_type'     => 'post',
             'capabilities'        => [
                 'edit_post'          => 'edit_waza_slots',
-                'read_post'          => 'read',
+                'read_post'          => 'read',  // Anyone can read
                 'delete_post'        => 'edit_waza_slots',
                 'edit_posts'         => 'edit_waza_slots',
                 'edit_others_posts'  => 'manage_waza',
@@ -75,6 +75,7 @@ class PostTypeManager {
                 'publish_posts'      => 'edit_waza_slots',
                 'read_private_posts' => 'manage_waza'
             ],
+            'map_meta_cap'        => true,  // IMPORTANT: Map to built-in caps for reading
             'has_archive'         => true,
             'hierarchical'        => false,
             'menu_position'       => null,
