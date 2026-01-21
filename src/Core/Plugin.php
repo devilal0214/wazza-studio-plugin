@@ -23,6 +23,7 @@ use WazaBooking\Frontend\FrontendManager;
 use WazaBooking\Frontend\ShortcodeManager;
 use WazaBooking\Frontend\AjaxHandler;
 use WazaBooking\Payment\PaymentManager;
+use WazaBooking\Payment\BookingPaymentHandler;
 use WazaBooking\QR\QRManager;
 use WazaBooking\Notifications\NotificationManager;
 use WazaBooking\Security\SecurityManager;
@@ -418,6 +419,7 @@ final class Plugin {
         $this->shortcode_manager = new ShortcodeManager();
         $this->ajax_handler = new AjaxHandler();
         $this->payment_manager = new PaymentManager();
+        $this->booking_payment_handler = new BookingPaymentHandler();
         $this->qr_manager = new QRManager();
         $this->security_manager = new SecurityManager();
         $this->user_account_manager = new UserAccountManager();
