@@ -363,9 +363,9 @@ class AttendanceScanner {
         
         if ($rental_date !== $today) {
             if ($rental_date > $today) {
-                $time_message = 'This rental is for ' . date_i18n('F j, Y', strtotime($rental_date)) . ' (future date).';
+                $time_message = 'This rental is for ' . $rental_start_datetime->format('F j, Y') . ' (future date).';
             } else {
-                $time_message = 'This rental was for ' . date_i18n('F j, Y', strtotime($rental_date)) . ' (past date).';
+                $time_message = 'This rental was for ' . $rental_start_datetime->format('F j, Y') . ' (past date).';
             }
         } elseif ($time_until_rental > 1800) {
             $minutes_until = round($time_until_rental / 60);
@@ -391,8 +391,12 @@ class AttendanceScanner {
                 'customer_name' => $rental->customer_name,
                 'customer_email' => $rental->customer_email,
                 'customer_phone' => $rental->customer_phone,
+                'user_name' => $rental->customer_name,
+                'user_email' => $rental->customer_email,
+                'user_phone' => $rental->customer_phone,
                 'booking_status' => $rental->booking_status,
                 'payment_status' => $rental->payment_status,
+                'total_amount' => $rental->total_amount,
                 'activity_title' => 'Studio Rental - ' . ucwords(str_replace('_', ' ', $rental->rental_type)),
                 'start_datetime' => $rental->rental_date . ' ' . $rental->start_time,
                 'end_datetime' => $rental->rental_date . ' ' . $rental->end_time
