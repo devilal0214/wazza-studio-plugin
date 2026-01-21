@@ -30,11 +30,20 @@ class BookingPaymentHandler {
      */
     public function handle_booking_payment_success($payment_data) {
         // Only handle booking payments (not rentals)
-        if (isset($payment_data['type']) && $payment_data['type'] !== 'booking') {
+        if (isset($payment_data['type']) && $payment_data['type'] === 'rental') {
             return;
         }
         
-        if (!isset($payment_data['booking_id'])) {
+        // Extract booking_id from payment_data
+        $booking_id = 0;
+        if (isset($payment_data['booking_id'])) {
+            $booking_id = intval($payment_data['booking_id']);
+        } elseif (isset($payment_data['type']) && $payment_data['type'] === 'booking' && isset($payment_data['id'])) {
+            $booking_id = intval($payment_data['id']);
+        }
+        
+        if (!$booking_id) {
+            error_log('BookingPaymentHandler: No booking_id in payment_data: ' . print_r($payment_data, true));
             return;
         }
         

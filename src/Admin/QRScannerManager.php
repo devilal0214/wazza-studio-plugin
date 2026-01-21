@@ -216,6 +216,50 @@ class QRScannerManager {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .waza-qr-scanner-container {
+                margin: 20px 10px;
+                padding: 15px;
+            }
+            
+            .scanner-section {
+                padding: 20px 15px;
+            }
+            
+            #qr-reader {
+                max-width: 100% !important;
+            }
+            
+            .booking-info {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .info-item {
+                padding: 12px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .waza-button {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .booking-header {
+                padding: 15px;
+            }
+            
+            .booking-header h2 {
+                font-size: 18px;
+            }
+        }
         </style>
         
         <!-- Include HTML5 QR Code Scanner Library -->
@@ -372,6 +416,10 @@ class QRScannerManager {
                             <div class="info-value">
                                 <span class="status-badge status-${booking.payment_status}">${booking.payment_status}</span>
                             </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Amount Paid</div>
+                            <div class="info-value">₹${parseFloat(booking.total_amount).toFixed(2)}</div>
                         </div>
                     </div>
                 </div>

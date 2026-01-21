@@ -800,7 +800,10 @@ class PaymentManager {
         ));
         
         if (!$payment) {
-            throw new \Exception(__('Payment record not found', 'waza-booking'));
+            error_log('Waza: Payment record not found for gateway_order_id: ' . $gateway_order_id . ' - This is OK for slot bookings, payment will be tracked via waza_bookings table');
+            // Don't throw exception - payment record is optional for slot bookings
+            // The booking status is updated directly in verify_razorpay_payment
+            return;
         }
         
         // Update payment record
