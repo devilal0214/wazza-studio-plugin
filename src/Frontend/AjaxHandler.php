@@ -276,8 +276,8 @@ class AjaxHandler {
                 update_option("waza_pending_account_{$booking_id}", [
                     'password' => $new_user_password,
                     'password_option' => $password_option,
-                    'email' => sanitize_email($_POST['user_email']),
-                    'name' => sanitize_text_field($_POST['user_name'])
+                    'email' => sanitize_email($_POST['customer_email']),
+                    'name' => sanitize_text_field($_POST['customer_name'])
                 ], false);
             }
             
@@ -949,17 +949,40 @@ class AjaxHandler {
                         <label for="customer_phone">Phone <span class="required">*</span></label>
                         <div class="waza-phone-wrapper">
                             <div class="waza-phone-input" style="display: flex; gap: 8px;">
-                                <select name="customer_phone_country" class="waza-country-select" style="width: 90px; flex-shrink: 0;">
+                                <select name="customer_phone_country" class="waza-country-select" style="width: 90px !important; flex-shrink: 0;">
                                     <option value="+91" selected>🇮🇳 +91</option>
                                     <option value="+1">🇺🇸 +1</option>
                                     <option value="+44">🇬🇧 +44</option>
                                 </select>
                                 <input type="tel" name="customer_phone" id="customer_phone" required
-                                       style="flex: 1;"
+                                       style="flex: 1 !important; min-width: 0;"
                                        value="<?php echo esc_attr($user_info['phone']); ?>"
                                        placeholder="9876543210">
                             </div>
                         </div>
+                        <style>
+                            /* Fix for auto-generated select_container div */
+                            .waza-phone-input .select_container {
+                                width: 90px !important;
+                                flex-shrink: 0 !important;
+                                display: inline-block !important;
+                            }
+                            .waza-phone-input .select_container select {
+                                width: 100% !important;
+                            }
+                            .waza-phone-wrapper {
+                                width: 100% !important;
+                            }
+                            .waza-phone-input {
+                                display: flex !important;
+                                gap: 8px !important;
+                                align-items: center !important;
+                            }
+                            .waza-phone-input input[type="tel"] {
+                                flex: 1 !important;
+                                min-width: 0 !important;
+                            }
+                        </style>
                     </div>
                 </div>
                 
