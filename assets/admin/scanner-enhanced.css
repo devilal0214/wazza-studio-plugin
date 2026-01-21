@@ -197,6 +197,15 @@
     padding: 0;
     overflow: hidden;
     animation: slideIn 0.3s ease;
+    margin-top: 20px; /* Add margin when displayed below scanner */
+}
+
+/* When result is shown below scanner viewport */
+.scanner-viewport + .waza-scan-result {
+    margin-top: 20px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 @keyframes slideIn {

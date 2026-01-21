@@ -142,11 +142,11 @@
             },
             success: function(response) {
                 if (response.success) {
-                    displayValidBooking(response.data);
+                    displayValidBooking(response.data, true); // true = from scanner
                 } else {
-                    displayError(response.data);
+                    displayError(response.data, true); // true = from scanner
                 }
-                $('#qr-reader-status p').text('Ready to scan next QR code');
+                $('#qr-reader-status p').html('<span style="color: #46b450;">✅ Scan successful - Scanner still active</span>');
             },
             error: function() {
                 showNotification('Failed to process QR code', 'error');
@@ -195,7 +195,7 @@
     /**
      * Display valid booking details
      */
-    function displayValidBooking(data) {
+    function displayValidBooking(data, fromScanner) {
         const isGroupBooking = data.attendance_info.is_group_booking;
         const remaining = data.attendance_info.remaining;
         
@@ -249,8 +249,8 @@
                                 <td><span class="status-badge success">${data.booking.payment_status}</span></td>
                             </tr>
                             <tr>
-                                <th>Amount:</th>
-                                <td>₹${data.booking.total_amount}</td>
+                                <th>Amount Paid:</th>
+                                <td>₹${parseFloat(data.booking.total_amount).toFixed(2)}</td>
                             </tr>
                         </table>
                     </div>
@@ -289,25 +289,41 @@
             </div>
         `;
         
-        $('#scan-result-area').html(html).slideDown();
+        // If from scanner, show below scanner viewport (don't hide scanner)
+        // If from manual search, show in main result area
+        const targetArea = fromScanner ? '.scanner-viewport' : '#scan-result-area';
+        
+        if (fromScanner) {
+            // Insert after scanner viewport
+            $(html).insertAfter('.scanner-viewport').slideDown();
+            // Keep scanner running - don't pause it
+        } else {
+            $('#scan-result-area').html(html).slideDown();
+        }
         
         // Bind mark attendance button
         $('.mark-attendance-btn').on('click', function() {
             const bookingId = $(this).data('booking-id');
             const slotId = $(this).data('slot-id');
-            markAttendance(bookingId, slotId);
+            markAttendance(bookingId, slotId, fromScanner);
         });
         
         // Bind cancel button
         $('.cancel-btn').on('click', function() {
-            $('#scan-result-area').slideUp();
+            if (fromScanner) {
+                $(this).closest('.waza-scan-result').slideUp(function() {
+                    $(this).remove();
+                });
+            } else {
+                $('#scan-result-area').slideUp();
+            }
         });
     }
     
     /**
      * Display error message
      */
-    function displayError(data) {
+    function displayError(data, fromScanner) {
         let html = `
             <div class="waza-scan-result error">
                 <div class="result-header">
@@ -333,10 +349,22 @@
             </div>
         `;
         
-        $('#scan-result-area').html(html).slideDown();
+        // If from scanner, show below scanner viewport
+        // If from manual search, show in main result area
+        if (fromScanner) {
+            $(html).insertAfter('.scanner-viewport').slideDown();
+        } else {
+            $('#scan-result-area').html(html).slideDown();
+        }
         
         $('.close-error-btn').on('click', function() {
-            $('#scan-result-area').slideUp();
+            if (fromScanner) {
+                $(this).closest('.waza-scan-result').slideUp(function() {
+                    $(this).remove();
+                });
+            } else {
+                $('#scan-result-area').slideUp();
+            }
         });
     }
     
@@ -435,7 +463,7 @@
     /**
      * Mark attendance
      */
-    function markAttendance(bookingId, slotId) {
+    function markAttendance(bookingId, slotId, fromScanner) {
         $('.mark-attendance-btn').prop('disabled', true).html('<span class="spinner is-active"></span> Marking...');
         
         $.ajax({
@@ -449,7 +477,7 @@
             },
             success: function(response) {
                 if (response.success) {
-                    displayAttendanceSuccess(response.data);
+                    displayAttendanceSuccess(response.data, fromScanner);
                     loadTodayStats();
                 } else {
                     showNotification(response.data.message || 'Failed to mark attendance', 'error');
@@ -467,7 +495,7 @@
     /**
      * Display attendance success
      */
-    function displayAttendanceSuccess(data) {
+    function displayAttendanceSuccess(data, fromScanner) {
         let html = `
             <div class="waza-scan-result success-complete">
                 <div class="result-header">
@@ -500,16 +528,34 @@
             </div>
         `;
         
-        $('#scan-result-area').html(html);
+        // Replace the current result with success message
+        if (fromScanner) {
+            $('.scanner-viewport').siblings('.waza-scan-result').remove();
+            $(html).insertAfter('.scanner-viewport').slideDown();
+        } else {
+            $('#scan-result-area').html(html);
+        }
         
         $('.continue-btn').on('click', function() {
-            $('#scan-result-area').slideUp();
+            if (fromScanner) {
+                $(this).closest('.waza-scan-result').slideUp(function() {
+                    $(this).remove();
+                });
+            } else {
+                $('#scan-result-area').slideUp();
+            }
             $('#booking-search-input').val('');
         });
         
         // Auto-hide after 5 seconds
         setTimeout(() => {
-            $('#scan-result-area').slideUp();
+            if (fromScanner) {
+                $('.scanner-viewport').siblings('.waza-scan-result').slideUp(function() {
+                    $(this).remove();
+                });
+            } else {
+                $('#scan-result-area').slideUp();
+            }
         }, 5000);
     }
     
