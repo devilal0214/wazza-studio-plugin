@@ -135,6 +135,12 @@ class BookingConfirmationManager {
         $qr_manager = \WazaBooking\Core\Plugin::get_instance()->get_manager('qr');
         $qr_image = false;
         
+        // Convert UTC to site timezone for QR data
+        $qr_start_dt = new \DateTime($slot->start_datetime, new \DateTimeZone('UTC'));
+        $qr_start_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+        $qr_end_dt = new \DateTime($slot->end_datetime, new \DateTimeZone('UTC'));
+        $qr_end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+        
         // Generate comprehensive QR code data for admin verification and attendance
         $qr_data = [
             'type' => 'booking',
@@ -146,8 +152,8 @@ class BookingConfirmationManager {
             'activity_id' => $slot->activity_id,
             'activity_name' => $booking->activity_title,
             'slot_id' => $booking->slot_id,
-            'date' => date('Y-m-d', strtotime($slot->start_datetime)),
-            'time' => date('H:i', strtotime($slot->start_datetime)) . '-' . date('H:i', strtotime($slot->end_datetime)),
+            'date' => $qr_start_dt->format('Y-m-d'),
+            'time' => $qr_start_dt->format('H:i') . '-' . $qr_end_dt->format('H:i'),
             'quantity' => $booking->quantity,
             'status' => $booking->booking_status,
             'payment_status' => $booking->payment_status,
@@ -199,16 +205,26 @@ class BookingConfirmationManager {
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Date:', 'waza-booking'); ?></span>
-                        <span class="waza-detail-value"><?php echo date_i18n('F j, Y', strtotime($slot->start_datetime)); ?></span>
+                        <span class="waza-detail-value">
+                            <?php 
+                            // Convert UTC to site timezone
+                            $start_dt = new \DateTime($slot->start_datetime, new \DateTimeZone('UTC'));
+                            $start_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+                            echo $start_dt->format('F j, Y'); 
+                            ?>
+                        </span>
                     </div>
                     
                     <div class="waza-detail-row">
                         <span class="waza-detail-label"><?php _e('Time:', 'waza-booking'); ?></span>
                         <span class="waza-detail-value">
                             <?php 
-                            echo date_i18n('g:i a', strtotime($slot->start_datetime));
+                            // Convert UTC to site timezone
+                            $end_dt = new \DateTime($slot->end_datetime, new \DateTimeZone('UTC'));
+                            $end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+                            echo $start_dt->format('g:i A');
                             echo ' – ';
-                            echo date_i18n('g:i a', strtotime($slot->end_datetime));
+                            echo $end_dt->format('g:i A');
                             ?>
                         </span>
                     </div>
