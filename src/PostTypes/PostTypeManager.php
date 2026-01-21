@@ -65,17 +65,7 @@ class PostTypeManager {
             'query_var'           => true,
             'rewrite'             => ['slug' => 'activities'],
             'capability_type'     => 'post',
-            'capabilities'        => [
-                'edit_post'          => 'edit_posts',
-                'read_post'          => 'read',
-                'delete_post'        => 'delete_posts',
-                'edit_posts'         => 'edit_posts',
-                'edit_others_posts'  => 'edit_others_posts',
-                'delete_posts'       => 'delete_posts',
-                'publish_posts'      => 'publish_posts',
-                'read_private_posts' => 'read_private_posts'
-            ],
-            'map_meta_cap'        => true,
+            'map_meta_cap'        => false,  // Disable to prevent capability check warnings
             'has_archive'         => true,
             'hierarchical'        => false,
             'menu_position'       => null,
