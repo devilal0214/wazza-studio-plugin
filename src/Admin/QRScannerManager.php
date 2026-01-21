@@ -525,6 +525,12 @@ class QRScannerManager {
             wp_send_json_error(['message' => 'Booking not found']);
         }
         
+        // Convert UTC datetime to site timezone (Asia/Kolkata)
+        $start_dt = new \DateTime($booking->start_datetime, new \DateTimeZone('UTC'));
+        $start_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+        $end_dt = new \DateTime($booking->end_datetime, new \DateTimeZone('UTC'));
+        $end_dt->setTimezone(new \DateTimeZone(wp_timezone_string()));
+        
         wp_send_json_success([
             'id' => $booking->id,
             'booking_code' => 'WB-' . str_pad($booking->id, 5, '0', STR_PAD_LEFT),
@@ -532,8 +538,8 @@ class QRScannerManager {
             'user_email' => $booking->user_email,
             'user_phone' => $booking->user_phone,
             'activity_name' => $booking->activity_name,
-            'date' => date('F j, Y', strtotime($booking->start_datetime)),
-            'time' => date('g:i a', strtotime($booking->start_datetime)) . ' - ' . date('g:i a', strtotime($booking->end_datetime)),
+            'date' => $start_dt->format('F j, Y'),
+            'time' => $start_dt->format('g:i a') . ' - ' . $end_dt->format('g:i a'),
             'quantity' => $booking->quantity,
             'status' => $booking->booking_status,
             'payment_status' => $booking->payment_status,
