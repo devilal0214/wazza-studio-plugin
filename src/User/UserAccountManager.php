@@ -1669,6 +1669,7 @@ Please review and approve or reject the instructor application.', 'waza-booking'
         // Check if table exists first to avoid errors
         $table_name = $wpdb->prefix . 'waza_booking_attendees';
         $attendees = [];
+        $booking_attended = $booking->attended ? true : false;
         
         if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
             $attendees = $wpdb->get_results($wpdb->prepare("
@@ -1681,9 +1682,6 @@ Please review and approve or reject the instructor application.', 'waza-booking'
                 WHERE booking_id = %d
                 ORDER BY seat_number ASC
             ", $booking_id));
-            
-            // Get attendance status from main booking (attendance is tracked at booking level, not per attendee)
-            $booking_attended = $booking->attended ? true : false;
             
             // Add attended status to all attendees (same for all since it's tracked at booking level)
             foreach ($attendees as $attendee) {
