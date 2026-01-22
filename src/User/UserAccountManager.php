@@ -1666,23 +1666,29 @@ Please review and approve or reject the instructor application.', 'waza-booking'
         }
         
         // Get attendees for this booking (for multi-seat bookings)
-        $attendees = $wpdb->get_results($wpdb->prepare("
-            SELECT 
-                attendee_name as name,
-                attendee_email as email,
-                attendee_phone as phone,
-                seat_number
-            FROM {$wpdb->prefix}waza_booking_attendees
-            WHERE booking_id = %d
-            ORDER BY seat_number ASC
-        ", $booking_id));
+        // Check if table exists first to avoid errors
+        $table_name = $wpdb->prefix . 'waza_booking_attendees';
+        $attendees = [];
         
-        // Get attendance status from main booking (attendance is tracked at booking level, not per attendee)
-        $booking_attended = $booking->attended ? true : false;
-        
-        // Add attended status to all attendees (same for all since it's tracked at booking level)
-        foreach ($attendees as $attendee) {
-            $attendee->attended = $booking_attended;
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
+            $attendees = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    attendee_name as name,
+                    attendee_email as email,
+                    attendee_phone as phone,
+                    seat_number
+                FROM {$wpdb->prefix}waza_booking_attendees
+                WHERE booking_id = %d
+                ORDER BY seat_number ASC
+            ", $booking_id));
+            
+            // Get attendance status from main booking (attendance is tracked at booking level, not per attendee)
+            $booking_attended = $booking->attended ? true : false;
+            
+            // Add attended status to all attendees (same for all since it's tracked at booking level)
+            foreach ($attendees as $attendee) {
+                $attendee->attended = $booking_attended;
+            }
         }
         
         // Count attended
