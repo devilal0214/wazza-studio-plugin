@@ -113,7 +113,7 @@ class PostTypeManager {
             'query_var'           => true,
             'rewrite'             => ['slug' => 'activities'],
             'capability_type'     => 'post',
-            'map_meta_cap'        => false,  // Disable to prevent capability check warnings
+            'map_meta_cap'        => true,  // Required for proper edit capabilities
             'has_archive'         => true,
             'hierarchical'        => false,
             'menu_position'       => null,
