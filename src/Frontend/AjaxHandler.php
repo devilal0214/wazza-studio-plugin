@@ -41,9 +41,9 @@ class AjaxHandler {
         add_action('wp_ajax_waza_apply_discount', [$this, 'apply_discount']);
         add_action('wp_ajax_nopriv_waza_apply_discount', [$this, 'apply_discount']);
         
-        // Activity filter actions
-        add_action('wp_ajax_waza_filter_activities', [$this, 'filter_activities']);
-        add_action('wp_ajax_nopriv_waza_filter_activities', [$this, 'filter_activities']);
+        // Activity filter actions - REMOVED: Handled by ActivityBrowserManager
+        // add_action('wp_ajax_waza_filter_activities', [$this, 'filter_activities']);
+        // add_action('wp_ajax_nopriv_waza_filter_activities', [$this, 'filter_activities']);
     }
     
     /**
