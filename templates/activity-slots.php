@@ -31,8 +31,7 @@ if (!$activity || $activity->post_type !== 'waza_activity') {
     return;
 }
 
-$price = get_post_meta($activity_id, '_waza_activity_price', true);
-$duration = get_post_meta($activity_id, '_waza_activity_duration', true);
+$duration = get_post_meta($activity_id, '_waza_duration', true);
 ?>
 
 <div class="waza-activity-booking-container">
@@ -62,9 +61,6 @@ $duration = get_post_meta($activity_id, '_waza_activity_duration', true);
                 <div class="activity-quick-info">
                     <?php if ($duration) : ?>
                         <span class="info-badge">⏱️ <?php echo esc_html($duration); ?> mins</span>
-                    <?php endif; ?>
-                    <?php if ($price) : ?>
-                        <span class="info-badge price">₹<?php echo number_format($price); ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="activity-description">
