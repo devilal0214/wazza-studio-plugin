@@ -424,8 +424,40 @@ class PostTypeManager {
         $skill_level = get_post_meta($post->ID, '_waza_skill_level', true);
         $equipment_required = get_post_meta($post->ID, '_waza_equipment_required', true);
         $max_participants = get_post_meta($post->ID, '_waza_max_participants', true);
+        $card_image = get_post_meta($post->ID, '_waza_card_image', true);
+        $detail_image = get_post_meta($post->ID, '_waza_detail_image', true);
         
         echo '<table class="form-table">';
+        
+        // Card Image
+        echo '<tr>';
+        echo '<th><label for="waza_card_image">' . esc_html__('Card Image', 'waza-booking') . '</label></th>';
+        echo '<td>';
+        echo '<div class="waza-image-upload">';
+        if ($card_image) {
+            echo '<img src="' . esc_url($card_image) . '" style="max-width: 200px; display: block; margin-bottom: 10px;" />';
+        }
+        echo '<input type="url" id="waza_card_image" name="waza_card_image" value="' . esc_attr($card_image) . '" class="regular-text" />';
+        echo '<button type="button" class="button waza-upload-image-button" data-target="waza_card_image">' . esc_html__('Upload Image', 'waza-booking') . '</button>';
+        echo '<p class="description">' . esc_html__('Image displayed on activity cards in /activities-2/ page (recommended: 400x300px)', 'waza-booking') . '</p>';
+        echo '</div>';
+        echo '</td>';
+        echo '</tr>';
+        
+        // Detail Image
+        echo '<tr>';
+        echo '<th><label for="waza_detail_image">' . esc_html__('Detail/Banner Image', 'waza-booking') . '</label></th>';
+        echo '<td>';
+        echo '<div class="waza-image-upload">';
+        if ($detail_image) {
+            echo '<img src="' . esc_url($detail_image) . '" style="max-width: 200px; display: block; margin-bottom: 10px;" />';
+        }
+        echo '<input type="url" id="waza_detail_image" name="waza_detail_image" value="' . esc_attr($detail_image) . '" class="regular-text" />';
+        echo '<button type="button" class="button waza-upload-image-button" data-target="waza_detail_image">' . esc_html__('Upload Image', 'waza-booking') . '</button>';
+        echo '<p class="description">' . esc_html__('Banner image displayed on activity booking page (recommended: 1200x400px)', 'waza-booking') . '</p>';
+        echo '</div>';
+        echo '</td>';
+        echo '</tr>';
         
         echo '<tr>';
         echo '<th><label for="waza_duration">' . esc_html__('Duration (minutes)', 'waza-booking') . '</label></th>';
@@ -455,6 +487,33 @@ class PostTypeManager {
         echo '</tr>';
         
         echo '</table>';
+        
+        // Add media uploader script
+        ?><script>
+        jQuery(document).ready(function($) {
+            $('.waza-upload-image-button').on('click', function(e) {
+                e.preventDefault();
+                const button = $(this);
+                const targetId = button.data('target');
+                const input = $('#' + targetId);
+                
+                const frame = wp.media({
+                    title: '<?php esc_html_e('Select or Upload Image', 'waza-booking'); ?>',
+                    button: { text: '<?php esc_html_e('Use this image', 'waza-booking'); ?>' },
+                    multiple: false
+                });
+                
+                frame.on('select', function() {
+                    const attachment = frame.state().get('selection').first().toJSON();
+                    input.val(attachment.url);
+                    button.prev('img').remove();
+                    input.before('<img src="' + attachment.url + '" style="max-width: 200px; display: block; margin-bottom: 10px;" />');
+                });
+                
+                frame.open();
+            });
+        });
+        </script><?php
     }
     
     /**
@@ -715,13 +774,17 @@ class PostTypeManager {
             'waza_duration',
             'waza_skill_level',
             'waza_equipment_required',
-            'waza_max_participants'
+            'waza_max_participants',
+            'waza_card_image',
+            'waza_detail_image'
         ];
         
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {
                 if ($field === 'waza_equipment_required') {
                     update_post_meta($post_id, '_' . $field, sanitize_textarea_field($_POST[$field]));
+                } elseif ($field === 'waza_card_image' || $field === 'waza_detail_image') {
+                    update_post_meta($post_id, '_' . $field, esc_url_raw($_POST[$field]));
                 } else {
                     update_post_meta($post_id, '_' . $field, sanitize_text_field($_POST[$field]));
                 }

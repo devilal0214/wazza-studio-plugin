@@ -123,7 +123,10 @@ class ActivityBrowserManager {
      * Filter activities based on criteria
      */
     public function filter_activities() {
-        // No nonce check - this is a public filter function
+        // Verify nonce if provided (for logged-in users)
+        if (isset($_POST['nonce'])) {
+            check_ajax_referer('waza_booking_nonce', 'nonce');
+        }
         
         $category = sanitize_text_field($_POST['category'] ?? '');
         $search = sanitize_text_field($_POST['search'] ?? '');
@@ -198,11 +201,17 @@ class ActivityBrowserManager {
             WHERE activity_id = %d
         ", $activity_id)) ?: 0;
         
+        // Get custom images or fallback to post thumbnail
+        $card_image = get_post_meta($activity_id, '_waza_card_image', true);
+        if (!$card_image) {
+            $card_image = get_the_post_thumbnail_url($activity_id, 'medium');
+        }
+        
         return [
             'id' => $activity_id,
             'title' => get_the_title($activity_id),
             'description' => wp_trim_words(get_the_content(null, false, $activity_id), 20),
-            'thumbnail' => get_the_post_thumbnail_url($activity_id, 'medium'),
+            'thumbnail' => $card_image,
             'price' => get_post_meta($activity_id, '_waza_price', true),
             'duration' => get_post_meta($activity_id, '_waza_duration', true),
             'category' => $this->get_activity_category($activity_id),

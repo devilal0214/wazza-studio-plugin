@@ -20,6 +20,7 @@ class RentalAdminManager {
         add_action('admin_menu', [$this, 'add_rental_menu'], 100);
         add_action('wp_ajax_waza_update_rental_status', [$this, 'update_rental_status']);
         add_action('wp_ajax_waza_delete_rental', [$this, 'delete_rental']);
+        add_action('wp_ajax_waza_get_rental_details', [$this, 'get_rental_details']);
     }
     
     /**
@@ -246,7 +247,44 @@ class RentalAdminManager {
                 $('#rental-details-modal').show();
                 $('#rental-details-content').html('<p>Loading details...</p>');
                 
-                // You can add AJAX call to fetch full details here
+                // Fetch rental details via AJAX
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'waza_get_rental_details',
+                        rental_id: rentalId,
+                        _wpnonce: '<?php echo wp_create_nonce('wp_admin'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            const r = response.data;
+                            let html = '<table class="form-table">';
+                            html += '<tr><th>Rental ID</th><td>WR-' + String(r.id).padStart(5, '0') + '</td></tr>';
+                            html += '<tr><th>Customer Name</th><td>' + r.customer_name + '</td></tr>';
+                            html += '<tr><th>Email</th><td>' + r.customer_email + '</td></tr>';
+                            html += '<tr><th>Phone</th><td>' + r.customer_phone + '</td></tr>';
+                            html += '<tr><th>Rental Type</th><td>' + r.rental_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) + '</td></tr>';
+                            html += '<tr><th>Duration</th><td>' + r.duration_type.replace(/\b\w/g, l => l.toUpperCase()) + '</td></tr>';
+                            html += '<tr><th>Date</th><td>' + r.rental_date + '</td></tr>';
+                            html += '<tr><th>Time</th><td>' + r.start_time + ' - ' + r.end_time + '</td></tr>';
+                            html += '<tr><th>Total Amount</th><td>₹' + parseFloat(r.total_amount).toFixed(2) + '</td></tr>';
+                            html += '<tr><th>Payment Status</th><td><span class="status-badge status-' + r.payment_status + '">' + r.payment_status.toUpperCase() + '</span></td></tr>';
+                            html += '<tr><th>Booking Status</th><td><span class="status-badge status-' + r.booking_status + '">' + r.booking_status.toUpperCase() + '</span></td></tr>';
+                            if (r.special_requirements) {
+                                html += '<tr><th>Special Requirements</th><td>' + r.special_requirements + '</td></tr>';
+                            }
+                            html += '<tr><th>Created</th><td>' + r.created_at + '</td></tr>';
+                            html += '</table>';
+                            $('#rental-details-content').html(html);
+                        } else {
+                            $('#rental-details-content').html('<p>Error loading details: ' + response.data.message + '</p>');
+                        }
+                    },
+                    error: function() {
+                        $('#rental-details-content').html('<p>Failed to load rental details.</p>');
+                    }
+                });
             });
             
             // Close modal
@@ -262,6 +300,36 @@ class RentalAdminManager {
         });
         </script>
         <?php
+    }
+    
+    /**
+     * Get rental details via AJAX
+     */
+    public function get_rental_details() {
+        check_ajax_referer('wp_admin', '_wpnonce', false);
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied', 'waza-booking')]);
+        }
+        
+        $rental_id = intval($_POST['rental_id'] ?? 0);
+        
+        if (!$rental_id) {
+            wp_send_json_error(['message' => __('Invalid rental ID', 'waza-booking')]);
+        }
+        
+        global $wpdb;
+        
+        $rental = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}waza_rentals WHERE id = %d",
+            $rental_id
+        ));
+        
+        if (!$rental) {
+            wp_send_json_error(['message' => __('Rental not found', 'waza-booking')]);
+        }
+        
+        wp_send_json_success($rental);
     }
     
     /**
