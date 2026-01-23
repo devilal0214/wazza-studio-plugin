@@ -97,11 +97,17 @@ if ($activities_query->post_count === 0) {
                 $booking_count = get_post_meta($activity_id, '_waza_booking_count', true) ?: 0;
                 $terms = get_the_terms($activity_id, 'waza_instructor_specialty');
                 $category = !empty($terms) ? $terms[0]->name : 'General';
+                
+                // Get custom card image or fallback to featured image
+                $card_image = get_post_meta($activity_id, '_waza_card_image', true);
+                if (!$card_image) {
+                    $card_image = get_the_post_thumbnail_url($activity_id, 'medium');
+                }
                 ?>
                 <div class="activity-card">
                     <div class="activity-thumbnail">
-                        <?php if (has_post_thumbnail()) : ?>
-                            <?php the_post_thumbnail('medium'); ?>
+                        <?php if ($card_image) : ?>
+                            <img src="<?php echo esc_url($card_image); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" />
                         <?php else : ?>
                             <div class="placeholder-image">
                                 <span class="activity-icon">🎯</span>
