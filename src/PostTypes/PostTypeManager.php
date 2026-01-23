@@ -26,6 +26,7 @@ class PostTypeManager {
         add_action('init', [$this, 'register_taxonomies']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
         add_action('save_post', [$this, 'save_meta_boxes']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
     }
     
     /**
@@ -36,6 +37,53 @@ class PostTypeManager {
         $this->register_slot_post_type();
         $this->register_booking_post_type();
         $this->register_instructor_post_type();
+    }
+    
+    /**
+     * Enqueue admin scripts and styles
+     */
+    public function enqueue_admin_scripts($hook) {
+        // Only load on activity edit pages
+        if (!in_array($hook, ['post.php', 'post-new.php'])) {
+            return;
+        }
+        
+        $screen = get_current_screen();
+        if ($screen && $screen->post_type === 'waza_activity') {
+            // Enqueue WordPress media uploader
+            wp_enqueue_media();
+            
+            // Add inline script for media uploader
+            wp_add_inline_script('jquery', '
+                jQuery(document).ready(function($) {
+                    $(".waza-upload-image-button").on("click", function(e) {
+                        e.preventDefault();
+                        var button = $(this);
+                        var targetId = button.data("target");
+                        var input = $("#" + targetId);
+                        var imagePreview = button.siblings("img");
+                        
+                        var frame = wp.media({
+                            title: "Select or Upload Image",
+                            button: { text: "Use this image" },
+                            multiple: false
+                        });
+                        
+                        frame.on("select", function() {
+                            var attachment = frame.state().get("selection").first().toJSON();
+                            input.val(attachment.url);
+                            if (imagePreview.length) {
+                                imagePreview.attr("src", attachment.url);
+                            } else {
+                                input.before("<img src=\"" + attachment.url + "\" style=\"max-width: 200px; display: block; margin-bottom: 10px;\" />");
+                            }
+                        });
+                        
+                        frame.open();
+                    });
+                });
+            ');
+        }
     }
     
     /**
@@ -487,33 +535,6 @@ class PostTypeManager {
         echo '</tr>';
         
         echo '</table>';
-        
-        // Add media uploader script
-        ?><script>
-        jQuery(document).ready(function($) {
-            $('.waza-upload-image-button').on('click', function(e) {
-                e.preventDefault();
-                const button = $(this);
-                const targetId = button.data('target');
-                const input = $('#' + targetId);
-                
-                const frame = wp.media({
-                    title: '<?php esc_html_e('Select or Upload Image', 'waza-booking'); ?>',
-                    button: { text: '<?php esc_html_e('Use this image', 'waza-booking'); ?>' },
-                    multiple: false
-                });
-                
-                frame.on('select', function() {
-                    const attachment = frame.state().get('selection').first().toJSON();
-                    input.val(attachment.url);
-                    button.prev('img').remove();
-                    input.before('<img src="' + attachment.url + '" style="max-width: 200px; display: block; margin-bottom: 10px;" />');
-                });
-                
-                frame.open();
-            });
-        });
-        </script><?php
     }
     
     /**

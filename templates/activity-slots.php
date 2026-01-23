@@ -44,7 +44,11 @@ $duration = get_post_meta($activity_id, '_waza_activity_duration', true);
         
         <div class="activity-hero">
             <div class="activity-hero-image">
-                <?php if (has_post_thumbnail($activity_id)) : ?>
+                <?php 
+                $detail_image = get_post_meta($activity_id, '_waza_detail_image', true);
+                if ($detail_image) : ?>
+                    <img src="<?php echo esc_url($detail_image); ?>" alt="<?php echo esc_attr($activity->post_title); ?>" />
+                <?php elseif (has_post_thumbnail($activity_id)) : ?>
                     <?php echo get_the_post_thumbnail($activity_id, 'large'); ?>
                 <?php else : ?>
                     <div class="placeholder-hero">
