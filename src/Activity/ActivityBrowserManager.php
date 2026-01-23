@@ -123,9 +123,10 @@ class ActivityBrowserManager {
      * Filter activities based on criteria
      */
     public function filter_activities() {
-        // Verify nonce if provided (for logged-in users)
-        if (isset($_POST['nonce'])) {
-            check_ajax_referer('waza_booking_nonce', 'nonce');
+        // Verify nonce if provided (optional check - don't die on failure for public access)
+        if (isset($_POST['nonce']) && !wp_verify_nonce($_POST['nonce'], 'waza_booking_nonce')) {
+            // Log for debugging but allow to continue for public pages
+            error_log('Waza Filter: Nonce verification failed but continuing for public access');
         }
         
         $category = sanitize_text_field($_POST['category'] ?? '');
