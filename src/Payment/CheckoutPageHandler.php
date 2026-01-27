@@ -242,6 +242,13 @@ class CheckoutPageHandler {
             function openRazorpay(orderData) {
                 console.log('Opening Razorpay with:', orderData);
                 
+                // Validate Razorpay object exists
+                if (typeof Razorpay === 'undefined') {
+                    console.error('Razorpay SDK not loaded');
+                    alert('Payment system not loaded. Please refresh the page and try again.');
+                    return;
+                }
+                
                 var options = {
                     key: orderData.key,
                     amount: orderData.amount,
@@ -301,8 +308,16 @@ class CheckoutPageHandler {
                     }
                 };
                 
-                var rzp = new Razorpay(options);
-                rzp.open();
+                console.log('Creating Razorpay instance with options:', options);
+                
+                try {
+                    var rzp = new Razorpay(options);
+                    console.log('Razorpay instance created, opening modal...');
+                    rzp.open();
+                } catch (error) {
+                    console.error('Error creating Razorpay instance:', error);
+                    alert('Failed to open payment modal: ' + error.message);
+                }
             }
             
             function openStripe(sessionData) {
