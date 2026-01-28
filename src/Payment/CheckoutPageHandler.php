@@ -207,6 +207,7 @@ class CheckoutPageHandler {
                 $.ajax({
                     url: waza_frontend.ajax_url,
                     type: 'POST',
+                    dataType: 'json', // Force JSON parsing, ignoring HTML warnings
                     data: {
                         action: 'waza_create_payment_order',
                         nonce: '<?php echo wp_create_nonce('waza_payment_nonce'); ?>',
@@ -221,6 +222,7 @@ class CheckoutPageHandler {
                         customer_phone: data.customer_phone
                     },
                     success: function(response) {
+                        console.log('Payment order response:', response);
                         if (response.success) {
                             if (gateway === 'razorpay') {
                                 openRazorpay(response.data);
@@ -230,11 +232,13 @@ class CheckoutPageHandler {
                                 window.location.href = response.data.redirect_url;
                             }
                         } else {
-                            alert(response.data.message || 'Payment initiation failed');
+                            alert('Payment failed: ' + (response.data.message || 'Unknown error'));
                         }
                     },
-                    error: function() {
-                        alert('Payment request failed. Please try again.');
+                    error: function(xhr, status, error) {
+                        console.error('Payment AJAX error:', status, error);
+                        console.error('Response text:', xhr.responseText);
+                        alert('Payment request failed: ' + error + '. Please try again.');
                     }
                 });
             }
