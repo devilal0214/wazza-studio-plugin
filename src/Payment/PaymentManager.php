@@ -232,6 +232,11 @@ class PaymentManager {
      * Create payment order
      */
     public function create_payment_order() {
+        // Clean output buffer to remove any warnings/notices
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
         // Check nonce - use frontend nonce or payment nonce
         if (!isset($_POST['nonce']) || 
             (!wp_verify_nonce($_POST['nonce'], 'waza_frontend_nonce') && 
@@ -445,6 +450,11 @@ class PaymentManager {
      * Verify payment
      */
     public function verify_payment() {
+        // Clean output buffer to remove any warnings/notices
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
         // Try payment nonce first, fallback to frontend nonce
         if (!check_ajax_referer('waza_payment_nonce', 'nonce', false)) {
             check_ajax_referer('waza_frontend_nonce', 'nonce');
