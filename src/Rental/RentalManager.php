@@ -236,7 +236,8 @@ class RentalManager {
                 'amount' => $amount,
                 'type' => 'rental',
                 'customer_name' => sanitize_text_field($_POST['customer_name']),
-                'customer_email' => sanitize_email($_POST['customer_email'])
+                'customer_email' => sanitize_email($_POST['customer_email']),
+                'customer_phone' => sanitize_text_field($_POST['customer_phone'])
             ], home_url('/checkout/'))
         ]);
     }

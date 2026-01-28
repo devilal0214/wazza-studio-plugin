@@ -232,15 +232,24 @@ class PaymentManager {
      * Create payment order
      */
     public function create_payment_order() {
-        // Clean output buffer to remove any warnings/notices
-        if (ob_get_level()) {
-            ob_clean();
+        // Suppress error display to prevent warnings from breaking JSON
+        $original_error_display = ini_get('display_errors');
+        ini_set('display_errors', '0');
+        
+        // Clean any existing output buffer
+        while (ob_get_level()) {
+            ob_end_clean();
         }
+        
+        // Start fresh output buffer
+        ob_start();
         
         // Check nonce - use frontend nonce or payment nonce
         if (!isset($_POST['nonce']) || 
             (!wp_verify_nonce($_POST['nonce'], 'waza_frontend_nonce') && 
              !wp_verify_nonce($_POST['nonce'], 'waza_payment_nonce'))) {
+            ob_end_clean();
+            ini_set('display_errors', $original_error_display);
             wp_send_json_error(['message' => __('Security check failed', 'waza-booking')], 403);
         }
         
@@ -286,10 +295,16 @@ class PaymentManager {
                 $order['booking_type'] = 'activity';
             }
             
+            // Clean buffer and restore error display before sending JSON
+            ob_end_clean();
+            ini_set('display_errors', $original_error_display);
+            
             wp_send_json_success($order);
             
         } catch (\Exception $e) {
             error_log('Waza Payment Error: ' . $e->getMessage());
+            ob_end_clean();
+            ini_set('display_errors', $original_error_display);
             wp_send_json_error(['message' => $e->getMessage()]);
         }
     }
@@ -450,10 +465,17 @@ class PaymentManager {
      * Verify payment
      */
     public function verify_payment() {
-        // Clean output buffer to remove any warnings/notices
-        if (ob_get_level()) {
-            ob_clean();
+        // Suppress error display to prevent warnings from breaking JSON
+        $original_error_display = ini_get('display_errors');
+        ini_set('display_errors', '0');
+        
+        // Clean any existing output buffer
+        while (ob_get_level()) {
+            ob_end_clean();
         }
+        
+        // Start fresh output buffer
+        ob_start();
         
         // Try payment nonce first, fallback to frontend nonce
         if (!check_ajax_referer('waza_payment_nonce', 'nonce', false)) {
@@ -583,12 +605,20 @@ class PaymentManager {
             error_log('=== PAYMENT VERIFICATION SUCCESS ===');
             error_log('Response: ' . print_r($result, true));
             
+            // Clean buffer and restore error display before sending JSON
+            ob_end_clean();
+            ini_set('display_errors', $original_error_display);
+            
             wp_send_json_success($result);
             
         } catch (\Exception $e) {
             error_log('=== PAYMENT VERIFICATION ERROR ===');
             error_log('Error: ' . $e->getMessage());
             error_log('Trace: ' . $e->getTraceAsString());
+            
+            ob_end_clean();
+            ini_set('display_errors', $original_error_display);
+            
             wp_send_json_error(['message' => $e->getMessage()]);
         }
     }
