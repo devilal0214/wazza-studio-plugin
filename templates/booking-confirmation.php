@@ -11,6 +11,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Suppress PHP 8.2 deprecation warnings from QR code library
+$original_error_reporting = error_reporting();
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
 // Get booking ID or rental ID from URL (with verification hash for security)
 $booking_id = isset($_GET['booking_id']) ? intval($_GET['booking_id']) : 0;
 $rental_id = isset($_GET['rental_id']) ? intval($_GET['rental_id']) : 0;
@@ -672,3 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php
+// Restore original error reporting level
+error_reporting($original_error_reporting);
+?>
