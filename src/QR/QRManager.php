@@ -22,6 +22,284 @@ if (!defined('ABSPATH')) {
 class QRManager {
     
     /**
+     * Constructor - Register hooks
+     */
+    public function __construct() {
+        add_action('template_redirect', [$this, 'handle_qr_code_download']);
+    }
+    
+    /**
+     * Handle QR code download page
+     */
+    public function handle_qr_code_download() {
+        // Get the requested path
+        $request_uri = $_SERVER['REQUEST_URI'];
+        
+        // Check if this is a QR code download request
+        // Handle both /qr-code/ and /qr-code? patterns
+        if (strpos($request_uri, '/qr-code/') === false && 
+            strpos($request_uri, '/qr-code?') === false) {
+            return;
+        }
+        
+        $token = sanitize_text_field($_GET['token'] ?? '');
+        
+        if (empty($token)) {
+            wp_die(__('Invalid QR code request. Please use the link from your booking confirmation email.', 'waza-booking'), __('Error', 'waza-booking'), ['response' => 400]);
+        }
+        
+        global $wpdb;
+        
+        // Get booking details from token
+        $booking = $wpdb->get_row($wpdb->prepare("
+            SELECT b.*, qt.token, qt.token_type, qt.expires_at,
+                   s.activity_id, s.start_datetime, s.end_datetime,
+                   p.post_title as activity_title
+            FROM {$wpdb->prefix}waza_qr_tokens qt
+            LEFT JOIN {$wpdb->prefix}waza_bookings b ON qt.booking_id = b.id
+            LEFT JOIN {$wpdb->prefix}waza_slots s ON b.slot_id = s.id
+            LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
+            WHERE qt.token = %s AND qt.is_active = 1
+        ", $token));
+        
+        if (!$booking) {
+            wp_die(__('QR code not found or expired. Please contact support if you believe this is an error.', 'waza-booking'), __('Error', 'waza-booking'), ['response' => 404]);
+        }
+        
+        // Check if token is expired
+        if (strtotime($booking->expires_at) < time()) {
+            wp_die(__('This QR code has expired. QR codes are valid until 2 hours after the activity ends.', 'waza-booking'), __('Expired', 'waza-booking'), ['response' => 410]);
+        }
+        
+        // Generate QR code image
+        $qr_image = $this->generate_qr_image($token, 300);
+        
+        if (!$qr_image) {
+            wp_die(__('Failed to generate QR code. Please try again or contact support.', 'waza-booking'), __('Error', 'waza-booking'), ['response' => 500]);
+        }
+        
+        // Display QR code page
+        $this->display_qr_code_page($booking, $qr_image, $token);
+        exit;
+    }
+    
+    /**
+     * Display QR code download page
+     * 
+     * @param object $booking
+     * @param string $qr_image Base64 encoded image
+     * @param string $token
+     */
+    private function display_qr_code_page($booking, $qr_image, $token) {
+        ?>
+        <!DOCTYPE html>
+        <html <?php language_attributes(); ?>>
+        <head>
+            <meta charset="<?php bloginfo('charset'); ?>">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title><?php _e('Download QR Code', 'waza-booking'); ?> - <?php bloginfo('name'); ?></title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .qr-container {
+                    background: white;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    max-width: 500px;
+                    width: 100%;
+                    padding: 40px;
+                    text-align: center;
+                }
+                .qr-header {
+                    margin-bottom: 30px;
+                }
+                .qr-header h1 {
+                    color: #333;
+                    font-size: 28px;
+                    margin-bottom: 10px;
+                }
+                .qr-header p {
+                    color: #666;
+                    font-size: 14px;
+                }
+                .qr-image-wrapper {
+                    background: #f8f9fa;
+                    border-radius: 15px;
+                    padding: 30px;
+                    margin-bottom: 30px;
+                }
+                .qr-image {
+                    width: 100%;
+                    max-width: 300px;
+                    height: auto;
+                    border: 4px solid white;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                }
+                .booking-details {
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin-bottom: 30px;
+                    text-align: left;
+                }
+                .booking-details h3 {
+                    color: #333;
+                    font-size: 18px;
+                    margin-bottom: 15px;
+                    text-align: center;
+                }
+                .detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 10px 0;
+                    border-bottom: 1px solid #e0e0e0;
+                }
+                .detail-row:last-child {
+                    border-bottom: none;
+                }
+                .detail-label {
+                    color: #666;
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+                .detail-value {
+                    color: #333;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                .action-buttons {
+                    display: flex;
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                .btn {
+                    flex: 1;
+                    padding: 15px 30px;
+                    border: none;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    text-decoration: none;
+                    display: inline-block;
+                }
+                .btn-primary {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                .btn-primary:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+                }
+                .btn-secondary {
+                    background: white;
+                    color: #667eea;
+                    border: 2px solid #667eea;
+                }
+                .btn-secondary:hover {
+                    background: #667eea;
+                    color: white;
+                }
+                .info-text {
+                    color: #888;
+                    font-size: 12px;
+                    margin-top: 20px;
+                    line-height: 1.6;
+                }
+                @media print {
+                    body {
+                        background: white;
+                    }
+                    .action-buttons,
+                    .info-text {
+                        display: none;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="qr-container">
+                <div class="qr-header">
+                    <h1><?php _e('Your QR Code', 'waza-booking'); ?></h1>
+                    <p><?php _e('Show this code at the venue to check in', 'waza-booking'); ?></p>
+                </div>
+                
+                <div class="qr-image-wrapper">
+                    <img src="<?php echo esc_attr($qr_image); ?>" alt="QR Code" class="qr-image" id="qr-image">
+                </div>
+                
+                <div class="booking-details">
+                    <h3><?php _e('Booking Details', 'waza-booking'); ?></h3>
+                    <div class="detail-row">
+                        <span class="detail-label"><?php _e('Booking ID', 'waza-booking'); ?>:</span>
+                        <span class="detail-value">#<?php echo esc_html($booking->id); ?></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><?php _e('Activity', 'waza-booking'); ?>:</span>
+                        <span class="detail-value"><?php echo esc_html($booking->activity_title); ?></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><?php _e('Name', 'waza-booking'); ?>:</span>
+                        <span class="detail-value"><?php echo esc_html($booking->user_name); ?></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><?php _e('Date', 'waza-booking'); ?>:</span>
+                        <span class="detail-value"><?php echo esc_html(date('M d, Y', strtotime($booking->start_datetime))); ?></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label"><?php _e('Time', 'waza-booking'); ?>:</span>
+                        <span class="detail-value"><?php echo esc_html(date('g:i A', strtotime($booking->start_datetime))); ?></span>
+                    </div>
+                    <?php if ($booking->attendees_count > 1): ?>
+                    <div class="detail-row">
+                        <span class="detail-label"><?php _e('Attendees', 'waza-booking'); ?>:</span>
+                        <span class="detail-value"><?php echo esc_html($booking->attendees_count); ?></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="downloadQR()"><?php _e('Download', 'waza-booking'); ?></button>
+                    <button class="btn btn-secondary" onclick="window.print()"><?php _e('Print', 'waza-booking'); ?></button>
+                </div>
+                
+                <p class="info-text">
+                    <?php _e('This QR code is valid until', 'waza-booking'); ?>: <strong><?php echo esc_html(date('M d, Y g:i A', strtotime($booking->expires_at))); ?></strong><br>
+                    <?php _e('Keep this code safe and do not share it with others.', 'waza-booking'); ?>
+                </p>
+            </div>
+            
+            <script>
+                function downloadQR() {
+                    const img = document.getElementById('qr-image');
+                    const link = document.createElement('a');
+                    link.href = img.src;
+                    link.download = 'waza-booking-<?php echo esc_js($booking->id); ?>-qr-code.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            </script>
+        </body>
+        </html>
+        <?php
+    }
+    
+    /**
      * Generate QR token for booking
      * 
      * @param int $booking_id

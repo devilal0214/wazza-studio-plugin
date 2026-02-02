@@ -123,6 +123,9 @@ class CheckoutPageHandler {
                         <button type="button" id="apply-promo-btn" class="waza-btn waza-btn-secondary">
                             <?php esc_html_e('Apply', 'waza-booking'); ?>
                         </button>
+                        <button type="button" id="remove-promo-btn" class="waza-btn waza-btn-danger" style="display: none;">
+                            <?php esc_html_e('Remove', 'waza-booking'); ?>
+                        </button>
                     </div>
                     <div id="promo-code-message" class="promo-message"></div>
                     <input type="hidden" id="applied-promo-code" value="">
@@ -201,6 +204,8 @@ class CheckoutPageHandler {
         .promo-code-field:focus { outline: none; border-color: #2271b1; }
         .waza-btn-secondary { background: #f0f0f0; color: #333; padding: 12px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
         .waza-btn-secondary:hover { background: #e0e0e0; }
+        .waza-btn-danger { background: #dc3545; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .waza-btn-danger:hover { background: #c82333; }
         .promo-message { margin-top: 12px; padding: 10px; border-radius: 4px; font-size: 14px; }
         .promo-message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .promo-message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
@@ -286,9 +291,10 @@ class CheckoutPageHandler {
                             $message.removeClass('error').addClass('success')
                                    .html('✓ ' + response.data.message).show();
                             
-                            // Disable input and button
+                            // Disable input and apply button, show remove button
                             $('#promo-code-input').prop('disabled', true);
-                            $btn.text('<?php esc_html_e('Applied', 'waza-booking'); ?>').prop('disabled', true);
+                            $btn.hide();
+                            $('#remove-promo-btn').show();
                             
                         } else {
                             $message.removeClass('success').addClass('error').text(response.data).show();
@@ -301,6 +307,28 @@ class CheckoutPageHandler {
                         $btn.prop('disabled', false).text('<?php esc_html_e('Apply', 'waza-booking'); ?>');
                     }
                 });
+            });
+            
+            // Remove Promo Code
+            $('#remove-promo-btn').on('click', function() {
+                // Reset UI
+                $('#discount-amount').text('0.00');
+                $('#total-amount').text(originalAmount.toFixed(2));
+                $('#discount-row').hide();
+                $('#applied-promo-code').val('');
+                $('#promo-discount-amount').val('0');
+                $('#promo-code-input').val('').prop('disabled', false);
+                $('#promo-code-message').hide();
+                
+                // Reset payment data
+                currentTotal = originalAmount;
+                paymentData.amount = originalAmount;
+                delete paymentData.promo_code;
+                delete paymentData.discount_amount;
+                
+                // Show apply button, hide remove button
+                $('#apply-promo-btn').text('<?php esc_html_e('Apply', 'waza-booking'); ?>').prop('disabled', false).show();
+                $(this).hide();
             });
             
             // Enter key on promo input
