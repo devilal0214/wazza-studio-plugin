@@ -44,6 +44,9 @@ require_once WAZA_BOOKING_PLUGIN_DIR . 'includes/sample-data.php';
 // Include quick setup functionality
 require_once WAZA_BOOKING_PLUGIN_DIR . 'includes/quick-setup.php';
 
+// Include migration runner
+require_once WAZA_BOOKING_PLUGIN_DIR . 'run-migration.php';
+
 use WazaBooking\Core\Plugin;
 
 /**

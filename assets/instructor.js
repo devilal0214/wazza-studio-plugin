@@ -186,20 +186,16 @@
             submitBtn.prop('disabled', true).text('Creating...');
             messageDiv.hide();
             
+            const formData = new FormData(this);
+            formData.append('action', 'waza_create_workshop');
+            formData.append('nonce', wazaInstructor.nonce);
+            
             $.ajax({
                 url: wazaInstructor.ajax_url,
                 type: 'POST',
-                data: {
-                    action: 'waza_create_workshop',
-                    nonce: wazaInstructor.nonce,
-                    activity_id: $('#workshop-activity').val(),
-                    capacity: $('#workshop-capacity').val(),
-                    price: $('#workshop-price').val(),
-                    location: $('#workshop-location').val(),
-                    date: $('#workshop-date').val(),
-                    time: $('#workshop-time').val(),
-                    end_time: $('#workshop-end-time').val()
-                },
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function (response) {
                     if (response.success) {
                         messageDiv
@@ -209,6 +205,7 @@
                             .fadeIn();
                         
                         form[0].reset();
+                        $('#workshop-image-preview').hide();
                         
                         // Reload workshops list
                         setTimeout(function () {
@@ -678,5 +675,20 @@
         html += '</tbody></table></div>';
         $('#students-list').html(html);
     }
+    
+    // Workshop image preview
+    $('#workshop-image').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                $('#workshop-image-preview img').attr('src', event.target.result);
+                $('#workshop-image-preview').show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#workshop-image-preview').hide();
+        }
+    });
 
 })(jQuery);

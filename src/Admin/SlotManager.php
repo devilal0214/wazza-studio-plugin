@@ -178,14 +178,13 @@ class SlotManager {
         // Get slots with activity details and filters - LATEST FIRST (DESC)
         $slots_query = "
             SELECT s.*, p.post_title as activity_title,
-                   pm.meta_value as instructor_id,
+                   s.instructor_id,
                    pi.post_title as instructor_name,
                    COUNT(b.id) as bookings_count,
                    SUM(CASE WHEN b.booking_status = 'confirmed' THEN b.attendees_count ELSE 0 END) as confirmed_bookings
             FROM {$wpdb->prefix}waza_slots s
             LEFT JOIN {$wpdb->posts} p ON s.activity_id = p.ID
-            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_waza_instructor'
-            LEFT JOIN {$wpdb->posts} pi ON pm.meta_value = pi.ID
+            LEFT JOIN {$wpdb->posts} pi ON s.instructor_id = pi.ID AND pi.post_type = 'waza_instructor'
             LEFT JOIN {$wpdb->prefix}waza_bookings b ON s.id = b.slot_id
             $where_sql
             GROUP BY s.id
@@ -494,6 +493,43 @@ class SlotManager {
                 
                 <tr>
                     <th scope="row">
+                        <label for="original_price"><?php esc_html_e('Original Price (Optional)', 'waza-booking'); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="original_price" name="original_price" step="0.01" min="0" value="" />
+                        <p class="description">
+                            <?php esc_html_e('Original price before discount. Will show strikethrough in frontend.', 'waza-booking'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="sale_price"><?php esc_html_e('Sale Price (Optional)', 'waza-booking'); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="sale_price" name="sale_price" step="0.01" min="0" value="" />
+                        <p class="description">
+                            <?php esc_html_e('Discounted sale price. If set, this will be shown instead of regular price.', 'waza-booking'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="slot_image"><?php esc_html_e('Slot Image', 'waza-booking'); ?></label>
+                    </th>
+                    <td>
+                        <input type="file" id="slot_image" name="slot_image" accept="image/*" />
+                        <div id="slot-image-preview" style="margin-top: 10px;"></div>
+                        <p class="description">
+                            <?php esc_html_e('Upload an image for this slot. Will be shown in slot browser.', 'waza-booking'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
                         <label for="location"><?php esc_html_e('Location', 'waza-booking'); ?></label>
                     </th>
                     <td>
@@ -673,8 +709,47 @@ class SlotManager {
                     <td>
                         <input type="number" id="bulk_price" name="price" step="0.01" min="0" value="0.00" />
                         <p class="description">
-                            <?php esc_html_e('Price for these slots. Leave as 0 for free slots.', 'waza-booking'); ?>
+                            <?php esc_html_e('Regular price for these slots. Leave as 0 for free slots.', 'waza-booking'); ?>
                         </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="bulk_original_price"><?php esc_html_e('Original Price (Optional)', 'waza-booking'); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="bulk_original_price" name="original_price" step="0.01" min="0" value="" />
+                        <p class="description">
+                            <?php esc_html_e('Original price before discount. Will show strikethrough in frontend.', 'waza-booking'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="bulk_sale_price"><?php esc_html_e('Sale Price (Optional)', 'waza-booking'); ?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="bulk_sale_price" name="sale_price" step="0.01" min="0" value="" />
+                        <p class="description">
+                            <?php esc_html_e('Discounted sale price. If set, this will be shown instead of regular price.', 'waza-booking'); ?>
+                        </p>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row">
+                        <label for="bulk_slot_image"><?php esc_html_e('Slot Image', 'waza-booking'); ?></label>
+                    </th>
+                    <td>
+                        <input type="file" id="bulk_slot_image" name="slot_image" accept="image/*" />
+                        <p class="description">
+                            <?php esc_html_e('Upload an image for all these slots (optional). This image will be displayed in the activities browser.', 'waza-booking'); ?>
+                        </p>
+                        <div id="slot-image-preview" style="margin-top:10px; display:none;">
+                            <img src="" style="max-width:300px; border-radius:8px;" />
+                        </div>
                     </td>
                 </tr>
             </table>
@@ -708,8 +783,24 @@ class SlotManager {
         $end_time = sanitize_text_field($_POST['end_time']);
         $capacity = intval($_POST['capacity']);
         $price = floatval($_POST['price'] ?? 0);
+        $original_price = !empty($_POST['original_price']) ? floatval($_POST['original_price']) : null;
+        $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
         $location = sanitize_text_field($_POST['location']);
         $notes = sanitize_textarea_field($_POST['notes']);
+        
+        // Handle image upload
+        $image_url = '';
+        if (!empty($_FILES['slot_image']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            
+            $uploaded_file = wp_handle_upload($_FILES['slot_image'], ['test_form' => false]);
+            
+            if (!isset($uploaded_file['error'])) {
+                $image_url = $uploaded_file['url'];
+            }
+        }
         
         if (!$activity_id || !$start_date || !$start_time || !$end_time) {
             wp_send_json_error(__('Please fill in all required fields.', 'waza-booking'));
@@ -754,19 +845,25 @@ class SlotManager {
                 'end_datetime' => $end_datetime,
                 'capacity' => $capacity,
                 'price' => $price,
+                'original_price' => $original_price,
+                'sale_price' => $sale_price,
                 'location' => $location,
                 'notes' => $notes,
+                'image_url' => $image_url,
                 'status' => 'active'
             ],
             [
                 '%d',  // activity_id
-                '%d',  // instructor_id (fixed: always %d, even if NULL)
+                '%d',  // instructor_id
                 '%s',  // start_datetime
                 '%s',  // end_datetime
                 '%d',  // capacity
                 '%f',  // price
+                '%f',  // original_price
+                '%f',  // sale_price
                 '%s',  // location
                 '%s',  // notes
+                '%s',  // image_url
                 '%s'   // status
             ]
         );
@@ -854,8 +951,24 @@ class SlotManager {
         $end_time = sanitize_text_field($_POST['end_time']);
         $capacity = intval($_POST['capacity']);
         $price = floatval($_POST['price'] ?? 0);
+        $original_price = !empty($_POST['original_price']) ? floatval($_POST['original_price']) : null;
+        $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
         $location = sanitize_text_field($_POST['location']);
         $notes = sanitize_textarea_field($_POST['notes']);
+        
+        // Handle image upload
+        $image_url = null;
+        if (!empty($_FILES['slot_image']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            
+            $uploaded_file = wp_handle_upload($_FILES['slot_image'], ['test_form' => false]);
+            
+            if (!isset($uploaded_file['error'])) {
+                $image_url = $uploaded_file['url'];
+            }
+        }
         
         if (!$slot_id || !$start_date || !$start_time || !$end_time) {
             wp_send_json_error(__('Please fill in all required fields.', 'waza-booking'));
@@ -866,27 +979,42 @@ class SlotManager {
         $start_datetime = $start_date . ' ' . $start_time . ':00';
         $end_datetime = $start_date . ' ' . $end_time . ':00';
         
+        // Prepare update data
+        $update_data = [
+            'instructor_id' => $instructor_id,
+            'start_datetime' => $start_datetime,
+            'end_datetime' => $end_datetime,
+            'capacity' => $capacity,
+            'price' => $price,
+            'original_price' => $original_price,
+            'sale_price' => $sale_price,
+            'location' => $location,
+            'notes' => $notes
+        ];
+        
+        $format = [
+            $instructor_id ? '%d' : '%s',
+            '%s',
+            '%s',
+            '%d',
+            '%f',
+            '%f',
+            '%f',
+            '%s',
+            '%s'
+        ];
+        
+        // Only update image if new one uploaded
+        if ($image_url !== null) {
+            $update_data['image_url'] = $image_url;
+            $format[] = '%s';
+        }
+        
         $result = $wpdb->update(
             $wpdb->prefix . 'waza_slots',
-            [
-                'instructor_id' => $instructor_id,
-                'start_datetime' => $start_datetime,
-                'end_datetime' => $end_datetime,
-                'capacity' => $capacity,
-                'price' => $price,
-                'location' => $location,
-                'notes' => $notes
-            ],
+            $update_data,
             ['id' => $slot_id],
-            [
-                $instructor_id ? '%d' : '%s',
-                '%s',
-                '%s',
-                '%d',
-                '%f',
-                '%s',
-                '%s'
-            ],
+            $format,
             ['%d']
         );
         
@@ -956,6 +1084,22 @@ class SlotManager {
         $capacity = intval($_POST['capacity']);
         $instructor_id = !empty($_POST['instructor_id']) ? intval($_POST['instructor_id']) : null;
         $price = floatval($_POST['price'] ?? 0);
+        $original_price = !empty($_POST['original_price']) ? floatval($_POST['original_price']) : null;
+        $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
+        
+        // Handle image upload
+        $image_url = '';
+        if (!empty($_FILES['slot_image']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            
+            $uploaded_file = wp_handle_upload($_FILES['slot_image'], ['test_form' => false]);
+            
+            if (!isset($uploaded_file['error'])) {
+                $image_url = $uploaded_file['url'];
+            }
+        }
         
         if (!$activity_id || !$start_date || !$end_date || empty($days) || empty($time_slots)) {
             wp_send_json_error(__('Please fill in all required fields.', 'waza-booking'));
@@ -1032,9 +1176,12 @@ class SlotManager {
                             'end_datetime' => $end_datetime,
                             'capacity' => $capacity,
                             'price' => $price,
+                            'original_price' => $original_price,
+                            'sale_price' => $sale_price,
+                            'image_url' => $image_url,
                             'status' => 'active'
                         ],
-                        ['%d', '%d', '%s', '%s', '%d', '%f', '%s']
+                        ['%d', '%d', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s']
                     );
                     
                     if ($result) {

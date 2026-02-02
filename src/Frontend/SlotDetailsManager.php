@@ -603,9 +603,15 @@ class SlotDetailsManager {
             wp_send_json_error(__('Slot not found', 'waza-booking'));
         }
         
+        // Calculate final price
+        $final_price = !empty($slot->sale_price) ? $slot->sale_price : $slot->price;
+        
+        $slot->price = $final_price;
         $slot->available_seats = $slot->capacity - $slot->booked_count;
         $slot->formatted_date = wp_date('F j, Y', strtotime($slot->start_datetime));
         $slot->formatted_time = wp_date('g:i A', strtotime($slot->start_datetime));
+        $slot->start_time = wp_date('g:i A', strtotime($slot->start_datetime));
+        $slot->end_time = wp_date('g:i A', strtotime($slot->end_datetime));
         
         wp_send_json_success($slot);
     }

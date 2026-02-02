@@ -57,8 +57,9 @@
      */
     function initModals() {
         // Close modal when clicking outside or on close button
+        // But NOT for booking modals (they have waza-booking-modal-content class)
         $(document).on('click', '.waza-modal', function (e) {
-            if (e.target === this) {
+            if (e.target === this && !$(this).find('.waza-booking-modal-content').length) {
                 closeModal();
             }
         });

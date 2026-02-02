@@ -132,6 +132,22 @@ jQuery(document).ready(function ($) {
             '<td><input type="number" id="edit_price" name="price" value="' + (slot.price || 0) + '" min="0" step="0.01" class="regular-text"></td>' +
             '</tr>' +
             '<tr>' +
+            '<th><label for="edit_original_price">Original Price</label></th>' +
+            '<td><input type="number" id="edit_original_price" name="original_price" value="' + (slot.original_price || '') + '" min="0" step="0.01" class="regular-text"><br><small>Price before discount (shown with strikethrough)</small></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<th><label for="edit_sale_price">Sale Price</label></th>' +
+            '<td><input type="number" id="edit_sale_price" name="sale_price" value="' + (slot.sale_price || '') + '" min="0" step="0.01" class="regular-text"><br><small>Discounted price (if empty, regular price is used)</small></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<th><label for="edit_slot_image">Slot Image</label></th>' +
+            '<td>' +
+            '<input type="file" id="edit_slot_image" name="slot_image" accept="image/*"><br>' +
+            '<small>Choose an image file to upload</small>' +
+            (slot.image_url ? '<br><img src="' + slot.image_url + '" style="max-width: 150px; margin-top: 10px; border-radius: 4px;">' : '') +
+            '</td>' +
+            '</tr>' +
+            '<tr>' +
             '<th><label for="edit_location">Location</label></th>' +
             '<td><input type="text" id="edit_location" name="location" value="' + (slot.location || '') + '" class="regular-text"></td>' +
             '</tr>' +
@@ -163,18 +179,16 @@ jQuery(document).ready(function ($) {
     $(document).on('submit', '#edit-slot-form', function (e) {
         e.preventDefault();
 
-        var formData = {};
-        $(this).serializeArray().forEach(function (field) {
-            formData[field.name] = field.value;
-        });
-
-        formData.action = 'waza_update_slot';
-        formData.nonce = wazaSlots.nonce;
+        var formData = new FormData(this);
+        formData.append('action', 'waza_update_slot');
+        formData.append('nonce', wazaSlots.nonce);
 
         $.ajax({
             url: wazaSlots.ajaxUrl,
             type: 'POST',
             data: formData,
+            processData: false,
+            contentType: false,
             beforeSend: function () {
                 $('#edit-slot-form button[type="submit"]').prop('disabled', true).text('Updating...');
             },
@@ -227,6 +241,21 @@ jQuery(document).ready(function ($) {
                 $('#bulk-create-form button[type="submit"]').prop('disabled', false).text('Create Slots');
             }
         });
+    });
+    
+    // Image preview for bulk slot creation
+    $('#bulk_slot_image').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                $('#slot-image-preview img').attr('src', event.target.result);
+                $('#slot-image-preview').show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#slot-image-preview').hide();
+        }
     });
 
     // Delete slot

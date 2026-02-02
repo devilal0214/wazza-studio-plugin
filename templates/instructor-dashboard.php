@@ -290,6 +290,35 @@ if (!defined('ABSPATH')) {
                         <input type="text" id="workshop-location" name="location" placeholder="e.g., Studio A">
                     </div>
                 </div>
+                
+                <div class="waza-form-row">
+                    <div class="waza-form-group">
+                        <label for="workshop-original-price"><?php esc_html_e('Original Price (Optional)', 'waza-booking'); ?></label>
+                        <input type="number" id="workshop-original-price" name="original_price" min="0" step="0.01" placeholder="0.00">
+                        <small style="color: #666; display: block; margin-top: 0.5rem;">
+                            <?php esc_html_e('Original price before discount (for display)', 'waza-booking'); ?>
+                        </small>
+                    </div>
+
+                    <div class="waza-form-group">
+                        <label for="workshop-sale-price"><?php esc_html_e('Sale Price (Optional)', 'waza-booking'); ?></label>
+                        <input type="number" id="workshop-sale-price" name="sale_price" min="0" step="0.01" placeholder="0.00">
+                        <small style="color: #666; display: block; margin-top: 0.5rem;">
+                            <?php esc_html_e('Discounted sale price (if applicable)', 'waza-booking'); ?>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="waza-form-group">
+                    <label for="workshop-image"><?php esc_html_e('Workshop Image', 'waza-booking'); ?></label>
+                    <input type="file" id="workshop-image" name="workshop_image" accept="image/*">
+                    <small style="color: #666; display: block; margin-top: 0.5rem;">
+                        <?php esc_html_e('Upload an image for this workshop (optional). Will be displayed in the activities browser.', 'waza-booking'); ?>
+                    </small>
+                    <div id="workshop-image-preview" style="margin-top:10px; display:none;">
+                        <img src="" style="max-width:200px; border-radius:8px;" />
+                    </div>
+                </div>
 
                 <div class="waza-form-group" style="display: none;">
                     <label for="workshop-location-old"><?php esc_html_e('Location Old', 'waza-booking'); ?></label>

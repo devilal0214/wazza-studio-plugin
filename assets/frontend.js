@@ -269,8 +269,22 @@
         });
 
         // Update total when quantity changes
-        $(document).on('change', '.waza-quantity-input', function () {
-            const quantity = parseInt($(this).val()) || 1;
+        $(document).on('change input', '.waza-quantity-input', function () {
+            const $input = $(this);
+            let quantity = parseInt($input.val()) || 1;
+            const maxSeats = parseInt($input.attr('max')) || 10;
+            const minSeats = parseInt($input.attr('min')) || 1;
+            
+            // Enforce limits
+            if (quantity > maxSeats) {
+                quantity = maxSeats;
+                $input.val(maxSeats);
+                showAlert('error', 'Maximum ' + maxSeats + ' seats allowed per booking.');
+            } else if (quantity < minSeats) {
+                quantity = minSeats;
+                $input.val(minSeats);
+            }
+            
             const slotId = $('input[name="slot_id"]').val();
             
             // Update displayed total if price is shown
@@ -325,13 +339,7 @@
      * Initialize modals
      */
     function initModals() {
-        // Close modal when clicking outside or on close button
-        $(document).on('click', '.waza-modal', function (e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
+        // Close modal only on close button click
         $(document).on('click', '.waza-close', function () {
             closeModal();
         });

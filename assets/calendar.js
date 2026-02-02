@@ -59,9 +59,27 @@
             renderCalendar();
         });
         
-        // Modal close
-        $('.waza-modal-close, .waza-modal').on('click', function(e) {
-            if (e.target === this) {
+        // Modal close - only close button, not outside click
+        $('#waza-slot-modal').find('.waza-modal-close').on('click', function() {
+            $('#waza-slot-modal').hide();
+        });
+        
+        // Prevent modal content clicks from closing modal - use stopImmediatePropagation
+        $(document).on('click', '#waza-slot-modal .waza-modal-content', function(e) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        });
+        
+        // Prevent calendar modal overlay clicks from closing - stop ALL handlers
+        $(document).on('click', '#waza-slot-modal', function(e) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        });
+        
+        // ESC key to close modal
+        $(document).on('keyup', function(e) {
+            if (e.keyCode === 27 && $('#waza-slot-modal').is(':visible')) {
                 $('#waza-slot-modal').hide();
             }
         });
@@ -194,23 +212,38 @@
             const displaySlots = slots.slice(0, maxSlots);
             
             displaySlots.forEach(function(slot) {
-                const showInstructor = wazaCalendar.settings.show_instructor === 'yes';
-                const showPrice = wazaCalendar.settings.show_price === 'yes';
+                // Debug: Check if activity name exists
+                if (!slot.activity || slot.activity === 'null' || slot.activity === '') {
+                    console.error('Missing activity name in slot:', slot);
+                }
                 
-                let slotText = slot.time;
-                if (slot.activity) {
-                    slotText += ' - ' + slot.activity;
+                // Compact display text - show time and activity name
+                let slotText = '<div style="font-weight: bold; font-size: 12px;">' + slot.time + '</div>';
+                if (slot.activity && slot.activity !== 'null' && slot.activity !== '') {
+                    slotText += '<div style="font-size: 10px; margin-top: 2px; line-height: 1.2;">' + slot.activity + '</div>';
+                } else {
+                    slotText += '<div style="font-size: 10px; margin-top: 2px; color: #999;">Activity</div>';
                 }
-                if (showInstructor && slot.instructor) {
-                    slotText += ' (' + slot.instructor + ')';
+                
+                // Full tooltip text
+                let tooltipText = (slot.activity || 'Activity') + '\n';
+                tooltipText += 'Time: ' + slot.time + '\n';
+                if (slot.instructor) {
+                    tooltipText += 'Instructor: ' + slot.instructor + '\n';
                 }
-                if (showPrice && slot.price > 0) {
-                    slotText += ' - ₹' + slot.price;
+                if (slot.price > 0) {
+                    tooltipText += 'Price: ₹' + slot.price + '\n';
                 }
+                tooltipText += 'Available: ' + slot.available_seats + '/' + slot.total_seats + ' seats';
                 
                 const $slotItem = $('<div>', {
                     class: 'waza-slot-item waza-slot-' + slot.availability_class,
                     'data-slot-id': slot.id,
+                    'data-activity': slot.activity,
+                    'data-instructor': slot.instructor,
+                    'data-price': slot.price,
+                    'data-seats': slot.available_seats + '/' + slot.total_seats,
+                    'title': tooltipText,
                     html: slotText
                 });
                 

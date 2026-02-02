@@ -498,7 +498,24 @@ Best regards,
             update_post_meta($activity_id, '_waza_location', sanitize_text_field($_POST['location']));
         }
         
+        // Handle image upload
+        $image_url = '';
+        if (!empty($_FILES['workshop_image']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            
+            $uploaded_file = wp_handle_upload($_FILES['workshop_image'], ['test_form' => false]);
+            
+            if (!isset($uploaded_file['error'])) {
+                $image_url = $uploaded_file['url'];
+            }
+        }
+        
         // Create slot with pending approval status
+        
+        $original_price = !empty($_POST['original_price']) ? floatval($_POST['original_price']) : null;
+        $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
         
         global $wpdb;
         $slot_inserted = $wpdb->insert(
@@ -510,11 +527,14 @@ Best regards,
                 'end_datetime' => $end_datetime,
                 'capacity' => $capacity,
                 'price' => $price,
+                'original_price' => $original_price,
+                'sale_price' => $sale_price,
+                'image_url' => $image_url,
                 'status' => 'pending_approval',
                 'created_at' => current_time('mysql'),
                 'updated_at' => current_time('mysql')
             ],
-            ['%d', '%d', '%s', '%s', '%d', '%f', '%s', '%s', '%s']
+            ['%d', '%d', '%s', '%s', '%d', '%f', '%f', '%f', '%s', '%s', '%s', '%s']
         );
         
         if (!$slot_inserted) {

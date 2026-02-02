@@ -98,10 +98,35 @@ class CheckoutPageHandler {
                         <span class="value"><?php echo esc_html($customer_email); ?></span>
                     </div>
                     <?php endif; ?>
+                    <div class="summary-item subtotal">
+                        <span class="label"><?php esc_html_e('Subtotal:', 'waza-booking'); ?></span>
+                        <span class="value">₹<span id="subtotal-amount"><?php echo number_format($amount, 2); ?></span></span>
+                    </div>
+                    <div class="summary-item discount" id="discount-row" style="display: none; color: #28a745;">
+                        <span class="label"><?php esc_html_e('Discount:', 'waza-booking'); ?></span>
+                        <span class="value">- ₹<span id="discount-amount">0.00</span></span>
+                    </div>
                     <div class="summary-item total">
                         <span class="label"><?php esc_html_e('Total Amount:', 'waza-booking'); ?></span>
-                        <span class="value">₹<?php echo number_format($amount, 2); ?></span>
+                        <span class="value">₹<span id="total-amount"><?php echo number_format($amount, 2); ?></span></span>
                     </div>
+                </div>
+
+                <!-- Promo Code Section -->
+                <div class="waza-promo-code-section">
+                    <h3><?php esc_html_e('Have a Promo Code?', 'waza-booking'); ?></h3>
+                    <div class="promo-code-input-group">
+                        <input type="text" 
+                               id="promo-code-input" 
+                               placeholder="<?php esc_attr_e('Enter promo code', 'waza-booking'); ?>" 
+                               class="promo-code-field">
+                        <button type="button" id="apply-promo-btn" class="waza-btn waza-btn-secondary">
+                            <?php esc_html_e('Apply', 'waza-booking'); ?>
+                        </button>
+                    </div>
+                    <div id="promo-code-message" class="promo-message"></div>
+                    <input type="hidden" id="applied-promo-code" value="">
+                    <input type="hidden" id="promo-discount-amount" value="0">
                 </div>
                 
                 <div class="waza-payment-methods">
@@ -164,7 +189,22 @@ class CheckoutPageHandler {
         .waza-order-summary h3 { margin-top: 0; color: #333; font-size: 20px; }
         .summary-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #ddd; }
         .summary-item:last-child { border-bottom: none; }
+        .summary-item.subtotal { font-size: 16px; }
+        .summary-item.discount { color: #28a745 !important; font-weight: 600; }
         .summary-item.total { font-size: 24px; font-weight: 700; color: #2271b1; margin-top: 15px; padding-top: 15px; border-top: 2px solid #2271b1; }
+        
+        /* Promo Code Section */
+        .waza-promo-code-section { background: #f0f7ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px dashed #2271b1; }
+        .waza-promo-code-section h3 { margin-top: 0; color: #333; font-size: 16px; margin-bottom: 15px; }
+        .promo-code-input-group { display: flex; gap: 10px; }
+        .promo-code-field { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; text-transform: uppercase; }
+        .promo-code-field:focus { outline: none; border-color: #2271b1; }
+        .waza-btn-secondary { background: #f0f0f0; color: #333; padding: 12px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .waza-btn-secondary:hover { background: #e0e0e0; }
+        .promo-message { margin-top: 12px; padding: 10px; border-radius: 4px; font-size: 14px; }
+        .promo-message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .promo-message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
         .waza-payment-methods h3 { margin-bottom: 20px; color: #333; font-size: 20px; }
         .payment-method-card { display: flex; align-items: center; gap: 20px; padding: 20px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 15px; transition: all 0.3s; }
         .payment-method-card:hover { border-color: #2271b1; box-shadow: 0 4px 15px rgba(34, 113, 177, 0.2); }
@@ -186,16 +226,90 @@ class CheckoutPageHandler {
         
         <script>
         jQuery(document).ready(function($) {
+            const originalAmount = <?php echo floatval($amount); ?>;
+            let currentTotal = originalAmount;
+            
             const paymentData = {
                 booking_id: <?php echo intval($booking_id); ?>,
                 rental_id: <?php echo intval($rental_id); ?>,
                 temp_rental_id: '<?php echo esc_js($temp_rental_id); ?>',
-                amount: <?php echo floatval($amount); ?>,
+                amount: originalAmount,
                 type: '<?php echo esc_js($type); ?>',
                 customer_name: '<?php echo esc_js($customer_name); ?>',
                 customer_email: '<?php echo esc_js($customer_email); ?>',
                 customer_phone: '<?php echo esc_js($customer_phone); ?>'
             };
+            
+            // Apply Promo Code
+            $('#apply-promo-btn').on('click', function() {
+                const promoCode = $('#promo-code-input').val().trim().toUpperCase();
+                const $btn = $(this);
+                const $message = $('#promo-code-message');
+                
+                if (!promoCode) {
+                    $message.removeClass('success').addClass('error').text('<?php esc_html_e('Please enter a promo code', 'waza-booking'); ?>').show();
+                    return;
+                }
+                
+                $btn.prop('disabled', true).text('<?php esc_html_e('Validating...', 'waza-booking'); ?>');
+                $message.hide();
+                
+                $.ajax({
+                    url: waza_frontend.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'waza_validate_promo_code',
+                        nonce: waza_frontend.nonce,
+                        code: promoCode,
+                        booking_amount: originalAmount
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Apply discount
+                            const discountAmount = parseFloat(response.data.discount_amount);
+                            const newTotal = Math.max(0, originalAmount - discountAmount);
+                            
+                            // Update UI
+                            $('#discount-amount').text(discountAmount.toFixed(2));
+                            $('#total-amount').text(newTotal.toFixed(2));
+                            $('#discount-row').show();
+                            $('#applied-promo-code').val(promoCode);
+                            $('#promo-discount-amount').val(discountAmount);
+                            
+                            // Update payment data
+                            currentTotal = newTotal;
+                            paymentData.amount = newTotal;
+                            paymentData.promo_code = promoCode;
+                            paymentData.discount_amount = discountAmount;
+                            
+                            // Show success message
+                            $message.removeClass('error').addClass('success')
+                                   .html('✓ ' + response.data.message).show();
+                            
+                            // Disable input and button
+                            $('#promo-code-input').prop('disabled', true);
+                            $btn.text('<?php esc_html_e('Applied', 'waza-booking'); ?>').prop('disabled', true);
+                            
+                        } else {
+                            $message.removeClass('success').addClass('error').text(response.data).show();
+                            $btn.prop('disabled', false).text('<?php esc_html_e('Apply', 'waza-booking'); ?>');
+                        }
+                    },
+                    error: function() {
+                        $message.removeClass('success').addClass('error')
+                               .text('<?php esc_html_e('Error validating promo code', 'waza-booking'); ?>').show();
+                        $btn.prop('disabled', false).text('<?php esc_html_e('Apply', 'waza-booking'); ?>');
+                    }
+                });
+            });
+            
+            // Enter key on promo input
+            $('#promo-code-input').on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('#apply-promo-btn').click();
+                }
+            });
             
             $('.pay-btn').on('click', function() {
                 const gateway = $(this).data('gateway');
@@ -219,7 +333,9 @@ class CheckoutPageHandler {
                         type: data.type,
                         customer_name: data.customer_name,
                         customer_email: data.customer_email,
-                        customer_phone: data.customer_phone
+                        customer_phone: data.customer_phone,
+                        promo_code: data.promo_code || '',
+                        discount_amount: data.discount_amount || 0
                     },
                     success: function(response) {
                         console.log('Payment order response:', response);

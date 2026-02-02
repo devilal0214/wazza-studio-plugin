@@ -9,7 +9,8 @@
  */
 
 // Load WordPress
-require_once('../../../wp-load.php');
+$wp_load = __DIR__ . '/../../../wp-load.php';
+require_once($wp_load);
 
 if (!current_user_can('manage_options')) {
     die('Access denied. Please log in as administrator.');

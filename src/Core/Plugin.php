@@ -346,6 +346,13 @@ final class Plugin {
     private $rental_payment_handler;
     
     /**
+     * Promo code manager
+     * 
+     * @var \WazaBooking\PromoCode\PromoCodeManager
+     */
+    private $promo_code_manager;
+    
+    /**
      * Private constructor to prevent direct instantiation
      * CRITICAL FIX: init_managers MUST be called before init_hooks
      */
@@ -439,6 +446,9 @@ final class Plugin {
         $this->notification_manager = new NotificationManager();
         $this->instructor_manager = new \WazaBooking\Admin\InstructorManager();
         $this->scanner_manager = new \WazaBooking\Admin\ScannerManager();
+        
+        // Initialize promo code manager
+        $this->promo_code_manager = new \WazaBooking\PromoCode\PromoCodeManager();
         
         // Initialize Enhanced Attendance Scanner
         $enhanced_scanner = new \WazaBooking\Admin\EnhancedAttendanceScanner();

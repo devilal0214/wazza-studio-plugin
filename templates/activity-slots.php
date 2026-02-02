@@ -1,6 +1,6 @@
 <?php
 /**
- * Activity Slots Selection Template
+ * Slot Booking Template - Direct Booking from Slot ID
  * 
  * @package WazaBooking
  */
@@ -10,18 +10,46 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Get activity ID from multiple sources
-$activity_id = 0;
-if (isset($atts['activity_id']) && $atts['activity_id']) {
-    $activity_id = intval($atts['activity_id']);
-} elseif (isset($_GET['activity_id'])) {
-    $activity_id = intval($_GET['activity_id']);
+// Check for slot_id (direct booking from activities-2 page)
+$slot_id = 0;
+if (isset($_GET['slot_id'])) {
+    $slot_id = intval($_GET['slot_id']);
+    
+    // Security: Verify slot exists and is active
+    global $wpdb;
+    $slot = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}waza_slots WHERE id = %d AND status = 'active'",
+        $slot_id
+    ));
+    
+    if (!$slot) {
+        echo '<div class="waza-error">';
+        echo '<h2>' . esc_html__('Invalid Slot', 'waza-booking') . '</h2>';
+        echo '<p>' . esc_html__('This slot is no longer available or doesn\'t exist.', 'waza-booking') . '</p>';
+        echo '<a href="' . esc_url(home_url('/activities-2/')) . '" class="waza-btn waza-btn-primary">' . esc_html__('Browse Available Slots', 'waza-booking') . '</a>';
+        echo '</div>';
+        return;
+    }
+    
+    $activity_id = $slot->activity_id;
+    
 } else {
-    $activity_id = get_query_var('activity_id', 0);
+    // Fallback to activity_id (legacy support)
+    $activity_id = 0;
+    if (isset($atts['activity_id']) && $atts['activity_id']) {
+        $activity_id = intval($atts['activity_id']);
+    } elseif (isset($_GET['activity_id'])) {
+        $activity_id = intval($_GET['activity_id']);
+    } else {
+        $activity_id = get_query_var('activity_id', 0);
+    }
 }
 
 if (!$activity_id) {
-    echo '<p>' . esc_html__('Please select an activity to view available slots.', 'waza-booking') . '</p>';
+    echo '<div class="waza-error">';
+    echo '<p>' . esc_html__('Please select a slot or activity to book.', 'waza-booking') . '</p>';
+    echo '<a href="' . esc_url(home_url('/activities-2/')) . '" class="waza-btn waza-btn-primary">' . esc_html__('Browse Available Slots', 'waza-booking') . '</a>';
+    echo '</div>';
     return;
 }
 
@@ -71,6 +99,7 @@ $duration = get_post_meta($activity_id, '_waza_duration', true);
     </div>
 
     <!-- Booking Steps -->
+    <?php if (!isset($slot_id)) : ?>
     <div class="booking-steps">
         <div class="step active" data-step="1">
             <span class="step-number">1</span>
@@ -89,16 +118,33 @@ $duration = get_post_meta($activity_id, '_waza_duration', true);
             <span class="step-label"><?php esc_html_e('Payment', 'waza-booking'); ?></span>
         </div>
     </div>
+    <?php else : ?>
+    <div class="booking-steps">
+        <div class="step active" data-step="1">
+            <span class="step-number">1</span>
+            <span class="step-label"><?php esc_html_e('Booking Details', 'waza-booking'); ?></span>
+        </div>
+        <div class="step" data-step="2">
+            <span class="step-number">2</span>
+            <span class="step-label"><?php esc_html_e('Payment', 'waza-booking'); ?></span>
+        </div>
+    </div>
+    <?php endif; ?>
 
-    <!-- Step 1: Date Selection -->
-    <div class="booking-step-content" id="step-1">
+    <!-- Step 1: Date Selection (hidden when slot_id provided) -->
+    <div class="booking-step-content" id="step-1" <?php echo isset($slot_id) ? 'style="display: none;"' : ''; ?>>
         <h3><?php esc_html_e('Select a Date', 'waza-booking'); ?></h3>
         <div class="date-selector">
             <input type="date" id="activity-date-picker" min="<?php echo date('Y-m-d'); ?>" value="<?php echo date('Y-m-d'); ?>">
         </div>
+        <div class="form-navigation" style="margin-top: 20px;">
+            <a href="<?php echo esc_url(home_url('/activities-2/')); ?>" class="waza-btn waza-btn-secondary">
+                ← <?php esc_html_e('Back to Activities', 'waza-booking'); ?>
+            </a>
+        </div>
     </div>
 
-    <!-- Step 2: Slot Selection -->
+    <!-- Step 2: Slot Selection (hidden when slot_id provided) -->
     <div class="booking-step-content" id="step-2" style="display: none;">
         <h3><?php esc_html_e('Available Time Slots', 'waza-booking'); ?></h3>
         <div class="selected-date-display">
@@ -113,6 +159,12 @@ $duration = get_post_meta($activity_id, '_waza_duration', true);
         <div class="slots-loader" style="display: none;">
             <span class="spinner"></span>
             <p><?php esc_html_e('Loading available slots...', 'waza-booking'); ?></p>
+        </div>
+        
+        <div class="form-navigation" style="margin-top: 20px;">
+            <button type="button" id="back-to-date-selection" class="waza-btn waza-btn-secondary">
+                ← <?php esc_html_e('Back to Date Selection', 'waza-booking'); ?>
+            </button>
         </div>
     </div>
 
@@ -180,9 +232,15 @@ $duration = get_post_meta($activity_id, '_waza_duration', true);
             </div>
 
             <div class="form-navigation">
-                <button type="button" class="waza-btn waza-btn-secondary" id="back-to-slots">
-                    ← <?php esc_html_e('Back to Slots', 'waza-booking'); ?>
-                </button>
+                <?php if (isset($slot_id)) : ?>
+                    <a href="<?php echo esc_url(home_url('/activities-2/')); ?>" class="waza-btn waza-btn-secondary">
+                        ← <?php esc_html_e('Back to Activities', 'waza-booking'); ?>
+                    </a>
+                <?php else : ?>
+                    <button type="button" class="waza-btn waza-btn-secondary" id="back-to-slots">
+                        ← <?php esc_html_e('Back to Slots', 'waza-booking'); ?>
+                    </button>
+                <?php endif; ?>
                 <button type="submit" class="waza-btn waza-btn-primary waza-btn-lg">
                     <?php esc_html_e('Proceed to Payment', 'waza-booking'); ?> →
                 </button>
@@ -224,6 +282,9 @@ $duration = get_post_meta($activity_id, '_waza_duration', true);
 .slot-time { font-size: 18px; font-weight: 700; color: #333; margin-bottom: 10px; }
 .slot-instructor { color: #666; margin-bottom: 10px; }
 .slot-availability { font-size: 14px; color: #46b450; }
+.slot-price { font-size: 20px; font-weight: 700; color: #2271b1; margin-top: 10px; }
+.slot-price .sale-price { color: #e02b20; margin-right: 8px; }
+.slot-price .original-price { text-decoration: line-through; color: #999; font-size: 16px; font-weight: 400; }
 .booking-summary { background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
 .booking-summary h4 { margin-bottom: 20px; color: #333; }
 .summary-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ddd; }
@@ -243,7 +304,41 @@ jQuery(document).ready(function($) {
     const ajaxUrl = waza_frontend ? waza_frontend.ajax_url : ajaxurl;
     const nonce = '<?php echo wp_create_nonce('waza_booking_nonce'); ?>';
     const activityId = <?php echo intval($activity_id); ?>;
+    const preSelectedSlotId = <?php echo isset($slot_id) ? intval($slot_id) : 0; ?>;
+    const isDirectBooking = preSelectedSlotId > 0;
     let selectedSlot = null;
+    
+    // If slot_id is in URL, load slot details and go to booking form
+    if (isDirectBooking) {
+        // For direct booking, we only have 2 steps total
+        // Step 3 (booking details) becomes Step 1
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'waza_get_slot_details',
+                nonce: nonce,
+                slot_id: preSelectedSlotId
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    selectedSlot = response.data;
+                    updateSummary();
+                    showStep(3); // Show booking details as step 1
+                } else {
+                    alert('<?php esc_html_e('Failed to load slot details', 'waza-booking'); ?>');
+                    window.location.href = '<?php echo esc_url(home_url('/activities-2/')); ?>';
+                }
+            },
+            error: function() {
+                alert('<?php esc_html_e('Error loading slot details', 'waza-booking'); ?>');
+                window.location.href = '<?php echo esc_url(home_url('/activities-2/')); ?>';
+            }
+        });
+    } else {
+        // Normal flow: show date selection
+        showStep(1);
+    }
     
     // Date selection
     $('#activity-date-picker').on('change', function() {
@@ -252,6 +347,15 @@ jQuery(document).ready(function($) {
         $('#selected-date-text').text(formatDate(selectedDate));
         showStep(2);
     });
+    
+    // Auto-load and SHOW today's slots on page load
+    const todayDate = $('#activity-date-picker').val();
+    if (todayDate) {
+        loadSlots(todayDate);
+        $('#selected-date-text').text(formatDate(todayDate));
+        // Automatically show step 2 with today's slots
+        showStep(2);
+    }
     
     // Load slots for selected date
     function loadSlots(date) {
@@ -313,12 +417,23 @@ jQuery(document).ready(function($) {
         }
         
         slots.forEach(function(slot) {
+            // Display price with sale price logic
+            let priceHtml = '';
+            if (slot.sale_price && slot.original_price) {
+                priceHtml = `<div class="slot-price">
+                    <span class="sale-price">₹${parseFloat(slot.sale_price).toLocaleString()}</span>
+                    <span class="original-price">₹${parseFloat(slot.original_price).toLocaleString()}</span>
+                </div>`;
+            } else {
+                priceHtml = `<div class="slot-price">₹${parseFloat(slot.price).toLocaleString()}</div>`;
+            }
+            
             const card = $(`
                 <div class="slot-card" data-slot-id="${slot.id}">
                     <div class="slot-time">${slot.start_time} - ${slot.end_time}</div>
                     <div class="slot-instructor">👤 ${slot.instructor_name}</div>
                     <div class="slot-availability">✓ ${slot.available_spots} spots available</div>
-                    <div class="slot-price">₹${parseFloat(slot.price).toLocaleString()}</div>
+                    ${priceHtml}
                 </div>
             `);
             
@@ -337,10 +452,22 @@ jQuery(document).ready(function($) {
     // Update booking summary
     function updateSummary() {
         if (selectedSlot) {
-            $('#summary-date').text(formatDate($('#activity-date-picker').val()));
+            // Use formatted_date from server if available (direct booking), otherwise format from date picker
+            const displayDate = selectedSlot.formatted_date || formatDate($('#activity-date-picker').val());
+            $('#summary-date').text(displayDate);
             $('#summary-time').text(selectedSlot.start_time + ' - ' + selectedSlot.end_time);
-            $('#summary-instructor').text(selectedSlot.instructor_name);
-            $('#summary-amount').text('₹' + parseFloat(selectedSlot.price).toLocaleString());
+            $('#summary-instructor').text(selectedSlot.instructor_name || selectedSlot.activity_name || 'TBA');
+            
+            // Show final price (sale price if available)
+            const finalPrice = selectedSlot.price; // Already calculated on server
+            if (selectedSlot.sale_price && selectedSlot.original_price) {
+                $('#summary-amount').html('₹' + parseFloat(selectedSlot.sale_price).toLocaleString() + 
+                    ' <span style="text-decoration:line-through;color:#999;font-size:14px;">₹' + 
+                    parseFloat(selectedSlot.original_price).toLocaleString() + '</span>');
+            } else {
+                $('#summary-amount').text('₹' + parseFloat(finalPrice).toLocaleString());
+            }
+            
             $('#selected_slot_id').val(selectedSlot.id);
         }
     }
@@ -350,12 +477,29 @@ jQuery(document).ready(function($) {
         $('.booking-step-content').hide();
         $('#step-' + stepNum).show();
         
-        $('.step').removeClass('active completed');
-        for (let i = 1; i < stepNum; i++) {
-            $('.step[data-step="' + i + '"]').addClass('completed');
+        if (isDirectBooking) {
+            // For direct booking: only 2 steps (step 3 = step 1, step 4 = step 2)
+            $('.step').removeClass('active completed');
+            if (stepNum === 3) {
+                $('.step[data-step="1"]').addClass('active');
+            } else if (stepNum === 4) {
+                $('.step[data-step="1"]').addClass('completed');
+                $('.step[data-step="2"]').addClass('active');
+            }
+        } else {
+            // Normal flow: 4 steps
+            $('.step').removeClass('active completed');
+            for (let i = 1; i < stepNum; i++) {
+                $('.step[data-step="' + i + '"]').addClass('completed');
+            }
+            $('.step[data-step="' + stepNum + '"]').addClass('active');
         }
-        $('.step[data-step="' + stepNum + '"]').addClass('active');
     }
+    
+    // Back to date selection button
+    $('#back-to-date-selection').on('click', function() {
+        showStep(1);
+    });
     
     // Back to slots
     $('#back-to-slots').on('click', function() {

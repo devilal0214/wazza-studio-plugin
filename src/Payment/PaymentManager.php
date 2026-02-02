@@ -257,6 +257,23 @@ class PaymentManager {
         $temp_rental_id = isset($_POST['temp_rental_id']) ? sanitize_text_field($_POST['temp_rental_id']) : '';
         $amount = floatval($_POST['amount']);
         $gateway = sanitize_text_field($_POST['gateway']);
+        $promo_code = isset($_POST['promo_code']) ? strtoupper(sanitize_text_field($_POST['promo_code'])) : '';
+        $discount_amount = isset($_POST['discount_amount']) ? floatval($_POST['discount_amount']) : 0;
+        
+        // Save promo code to booking if provided
+        if ($booking_id && $promo_code) {
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->prefix . 'waza_bookings',
+                [
+                    'coupon_code' => $promo_code,
+                    'discount_amount' => $discount_amount
+                ],
+                ['id' => $booking_id],
+                ['%s', '%f'],
+                ['%d']
+            );
+        }
         
         // For rentals, retrieve amount from transient if not provided
         if ($temp_rental_id && !$amount) {
@@ -577,6 +594,12 @@ class PaymentManager {
                 ));
                 
                 if ($booking) {
+                    // Apply promo code usage if used
+                    if (!empty($booking->coupon_code)) {
+                        $promo_manager = new \WazaBooking\PromoCode\PromoCodeManager();
+                        $promo_manager->apply_promo_code($booking->coupon_code);
+                    }
+                    
                     // Trigger payment success action for booking completion
                     do_action('waza_payment_success', [
                         'gateway' => $gateway,

@@ -147,6 +147,15 @@ class AjaxHandler {
         $password_option = sanitize_text_field($_POST['password_option'] ?? 'auto');
         $customer_password = $_POST['customer_password'] ?? '';
         
+        // Validate quantity limits
+        if ($quantity < 1) {
+            wp_send_json_error(__('Quantity must be at least 1.', 'waza-booking'));
+        }
+        
+        if ($quantity > 10) {
+            wp_send_json_error(__('Maximum 10 seats allowed per booking.', 'waza-booking'));
+        }
+        
         // Get attendee details (for multi-seat bookings)
         $attendee_names = isset($_POST['attendee_name']) ? array_map('sanitize_text_field', $_POST['attendee_name']) : [];
         $attendee_emails = isset($_POST['attendee_email']) ? array_map('sanitize_email', $_POST['attendee_email']) : [];
@@ -626,13 +635,22 @@ class AjaxHandler {
                             $slot_class = 'limited';
                         }
                         
-                        $html .= '<div class="waza-slot-indicator ' . $slot_class . '" data-slot-id="' . $slot['id'] . '">';
-                        $html .= date('H:i', strtotime($slot['start_time']));
+                        $html .= '<div class="waza-slot-indicator ' . $slot_class . '" data-slot-id="' . $slot['id'] . '" title="' . esc_attr($slot['activity_title']) . ' - ' . date('g:i A', strtotime($slot['start_time'])) . '">';
+                        $html .= '<div class="slot-time">' . date('H:i', strtotime($slot['start_time'])) . '</div>';
+                        if (!empty($slot['activity_title'])) {
+                            // Use first 2 words or first 10 characters for compact display
+                            $words = explode(' ', $slot['activity_title']);
+                            $short_name = (count($words) > 1) ? $words[0] . ' ' . $words[1] : $slot['activity_title'];
+                            if (strlen($short_name) > 12) {
+                                $short_name = substr($short_name, 0, 10) . '.';
+                            }
+                            $html .= '<div class="slot-name">' . esc_html($short_name) . '</div>';
+                        }
                         $html .= '</div>';
                     }
                     
                     if (count($slots) > 3) {
-                        $html .= '<div class="waza-slot-indicator">+' . (count($slots) - 3) . '</div>';
+                        $html .= '<div class="waza-slot-indicator waza-more-slots">+' . (count($slots) - 3) . '</div>';
                     }
                     
                     $html .= '</div>';
@@ -641,6 +659,55 @@ class AjaxHandler {
             
             $html .= '</div>';
         }
+        
+        // Add CSS for compact slot design
+        $html .= '<style>
+        .waza-slot-indicator { 
+            padding: 4px 6px !important; 
+            border-radius: 4px !important; 
+            font-size: 11px !important;
+            line-height: 1.3 !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+            background: #e8f5e9 !important;
+            border-left: 3px solid #4caf50 !important;
+        }
+        .waza-slot-indicator:hover {
+            transform: scale(1.05) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+        .waza-slot-indicator.limited { 
+            background: #fff3e0 !important; 
+            border-left-color: #ff9800 !important;
+        }
+        .waza-slot-indicator.full { 
+            background: #ffebee !important; 
+            border-left-color: #f44336 !important;
+            opacity: 0.6 !important;
+            cursor: not-allowed !important;
+        }
+        .waza-slot-indicator .slot-time {
+            font-weight: 700 !important;
+            font-size: 12px !important;
+            color: #1a237e !important;
+            margin-bottom: 1px !important;
+        }
+        .waza-slot-indicator .slot-name {
+            font-size: 9px !important;
+            color: #37474f !important;
+            font-weight: 500 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .waza-slot-indicator.waza-more-slots {
+            background: #f5f5f5 !important;
+            border-left-color: #9e9e9e !important;
+            font-weight: 600 !important;
+            color: #616161 !important;
+        }
+        </style>';
         
         // Fill remaining cells
         $total_cells = 42; // 6 weeks * 7 days
@@ -829,12 +896,17 @@ class AjaxHandler {
             return null;
         }
         
+        // Calculate final price (use sale_price if available, otherwise regular price)
+        $final_price = !empty($slot_data->sale_price) ? $slot_data->sale_price : $slot_data->price;
+        
         // Convert to object with expected properties
         $slot = (object)[
             'ID' => $slot_data->id,
             'activity_title' => $slot_data->activity_title ?: '',
             'instructor_name' => $slot_data->instructor_name ?: '',
-            'price' => (float)$slot_data->price,
+            'price' => (float)$final_price,
+            'original_price' => (float)$slot_data->original_price,
+            'sale_price' => (float)$slot_data->sale_price,
             'start_date' => date('Y-m-d', strtotime($slot_data->start_datetime)),
             'start_time' => date('H:i', strtotime($slot_data->start_datetime)),
             'end_time' => date('H:i', strtotime($slot_data->end_datetime)),
@@ -910,8 +982,10 @@ class AjaxHandler {
                     <label for="booking_quantity">Number of Seats <span class="required">*</span></label>
                     <input type="number" name="quantity" id="booking_quantity" class="waza-quantity-input" 
                            min="1" max="<?php echo min(10, (int)$slot->available_spots); ?>" 
-                           value="1" required>
-                    <p class="waza-field-help">Available seats: <?php echo (int)$slot->available_spots; ?></p>
+                           value="1" required
+                           data-max-seats="<?php echo (int)$slot->available_spots; ?>"
+                           oninput="this.value = Math.min(Math.max(parseInt(this.value) || 1, 1), <?php echo min(10, (int)$slot->available_spots); ?>)">
+                    <p class="waza-field-help">Available seats: <strong><?php echo (int)$slot->available_spots; ?></strong> (Max 10 per booking)</p>
                 </div>
                 
                 <!-- Attendee Details (shown when quantity > 1) -->
